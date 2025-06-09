@@ -14,13 +14,9 @@ int main(int argc, char* argv[]) {
     if (argc < 4) {
         fprintf(stderr,
             "Uso:\n"
-            "  %s <algoritmo> <patrón> <archivo> [flags]\n"
+            "  %s <algoritmo> <patrón> <archivo>\n"
             "  algoritmos disponibles: kmp, bm, shiftand\n"
-            "  flags:\n"
-            "    i : búsqueda sin distinguir mayúsculas/minúsculas\n"
-            "    s : eliminar espacios extra\n"
-            "Puedes combinar, p.ej. \"is\".\n"
-            "Ejemplo: %s bm \"patrón\" documento.html is\n",
+            "Ejemplo: %s bm \"patrón\" documento.html\n",
             argv[0], argv[0]
         );
         return EXIT_FAILURE;
@@ -34,44 +30,37 @@ int main(int argc, char* argv[]) {
     }
     strcpy(pattern, argv[2]);
     const char* filename = argv[3];
-    const char* flags = (argc >= 5) ? argv[4] : "";
 
-    //carga archivo
+    // Cargar archivo
     char* raw = loadFile(filename);
     if (!raw) {
-        free(pattern);
         return EXIT_FAILURE;
     }
 
-    //rocesa html si es necesario
+    // Procesar HTML si es necesario
     char* text;
     if (endsWith(filename, ".html") || endsWith(filename, ".htm")) {
         text = stripHTML(raw);
         free(raw);
         if (!text) {
             fprintf(stderr, "Error: stripHTML devolvió NULL\n");
-            free(pattern);
             return EXIT_FAILURE;
         }
     } else {
         text = raw;
     }
 
-    //flags de normalizacion
-    int caseInsensitive = (strchr(flags, 'i') != NULL);
-    int squeeze        = (strchr(flags, 's') != NULL);
-    if (caseInsensitive) {
-        toLowerInPlace(text);
-        toLowerInPlace(pattern);
-    }
-    if (squeeze) {
-        squeezeSpaces(text);
-        squeezeSpaces(pattern);
-    }
+    // Normalización automática (siempre se aplica)
+    convertir_a_minusculas(text);
+    limpiar_palabra(text);
 
-    //ejecuta algoritmo seleccionado
-    printf(">>> Algoritmo: %s | Patrón: \"%s\" | Archivo: %s | Flags: %s\n\n",
-           alg, pattern, filename, flags);
+    convertir_a_minusculas(pattern);
+    limpiar_palabra(pattern);
+
+    // Ejecutar algoritmo seleccionado
+    printf(">>> Algoritmo: %s | Patrón: \"%s\" | Archivo: %s\n\n",
+           alg, argv[2], filename);
+    
     if (strcmp(alg, "kmp") == 0) {
         searchKMP(pattern, text);
     } else if (strcmp(alg, "bm") == 0) {

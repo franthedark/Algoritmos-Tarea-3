@@ -29,4 +29,11 @@ void toLowerInPlace(char* s);
  */
 void squeezeSpaces(char* s);
 
+void normalizeString(char* str);
+void buildNormalizationTable(unsigned char table[256]);
+
+void convertir_a_minusculas(char *palabra);
+
+void limpiar_palabra(char *palabra);
+
 #endif

@@ -1,0 +1,7 @@
+Tech Innovation – Wi‑Fi HaLow Breakthrough
+
+  Groundbreaking Wi‑Fi HaLow Test Achieves 16 km Range
+  
+    According to NewsBytes, Wi‑Fi HaLow—a low‑power, long‑range Wi‑Fi standard (IEEE 802.11ah)—has
+    successfully demonstrated real‑world performance over 16 km. This breakthrough opens new possibilities
+    for IoT connectivity in rural and industrial settings :contentReference[oaicite:1]{index=1}.

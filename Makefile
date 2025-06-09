@@ -32,6 +32,7 @@ run:
 	@echo "Bienvenido al buscador de patrones."
 	@echo "Para ejecutar el programa, usa uno de los siguientes comandos:"
 	@echo "  make run-kmp PAT=\"abc\" FILE=texto.txt"
+	@echo "  (El archivo .txt debe estar en el directorio docs/)"
 	@echo ""
 	@echo "Programa desarrollado por Diego Galindo y Francisco Mercado."
 	@echo "Para más información, consulta el README.md."
@@ -41,9 +42,16 @@ run:
 # Donde ALGORITMO puede ser kmp, bm, sa, o todas
 run-%: $(TARGET)
 	@if [ -z "$(PAT)" ] || [ -z "$(FILE)" ]; then \
-		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo [FLAGS=opciones]"; \
+		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo"; \
 		exit 1; \
 	fi
-	./$(TARGET) $* "$(PAT)" "$(FILE)" $(FLAGS)
+	@if [ -f "docs/$(FILE)" ]; then \
+		./$(TARGET) $* "$(PAT)" "docs/$(FILE)"; \
+	elif [ -f "$(FILE)" ]; then \
+		./$(TARGET) $* "$(PAT)" "$(FILE)"; \
+	else \
+		echo "Error: Archivo '$(FILE)' no encontrado en el directorio actual ni en docs/"; \
+	exit 1; \
+	fi
 
 .PHONY: all clean setup run-%

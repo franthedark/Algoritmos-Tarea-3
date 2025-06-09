@@ -1,0 +1,7 @@
+IA en Diagnóstico Médico
+
+  IA predice cuál paciente se beneficiará de ensayos clínicos
+  
+    Según ScienceDaily, se ha desarrollado una nueva plataforma de inteligencia artificial que identifica
+    a pacientes más propensos a beneficiarse de ensayos clínicos, optimizando los procesos de investigación
+    médica :contentReference[oaicite:3]{index=3}.
