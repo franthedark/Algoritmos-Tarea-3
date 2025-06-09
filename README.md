@@ -44,8 +44,43 @@ Encargado de carga, preprocesamiento e indexación
 ├── docs/        # Documentación adicional y casos de prueba
 ├── Makefile     # Instrucciones de compilación
 └── README.md    # Este archivo
-
 ```
 
-# Cómo utilizar el programa
-En proceso
+## Ejecución del proyecto
+
+**Compilar todo**  
+ Compila los módulos y genera el ejecutable en `build/buscador`
+  
+```
+make
+```    
+**Mostrar ayuda básica**  
+ Muestra un mensaje con instrucciones de uso
+ 
+```
+make run
+```    
+**Buscar con KMP**  
+ Ejecuta el algoritmo Knuth–Morris–Pratt sobre el archivo indicado
+ 
+```
+make run-kmp PAT="patrón" FILE=archivo.txt
+```    
+**Buscar con Boyer–Moore**  
+ Ejecuta el algoritmo Boyer–Moore sobre el archivo indicado
+ 
+```
+make run-bm PAT="patrón" FILE=archivo.txt
+```    
+**Buscar con Shift-And**  
+ Ejecuta el algoritmo Shift-And sobre el archivo indicado
+ 
+```
+make run-sa PAT="patrón" FILE=archivo.txt
+```    
+**Limpiar artefactos**  
+ Elimina los directorios build/ y obj/ con todos los objetos y el ejecutable
+ 
+```
+make clean
+```
