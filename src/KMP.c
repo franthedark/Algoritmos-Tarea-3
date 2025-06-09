@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static void computeLPSArray(const char* pat, size_t M, int* lps) {
+void computeLPSArray(const char* pat, size_t M, int* lps) {
     lps[0] = 0;
     size_t len = 0;
     size_t i = 1;

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 //solo funciona si pattern.length <= 64
-static void buildMask(const char* pat, unsigned long long masks[256]) {
+void buildMask(const char* pat, unsigned long long masks[256]) {
     size_t M = strlen(pat);
     for (int c = 0; c < 256; c++) {
         masks[c] = 0ULL;

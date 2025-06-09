@@ -27,7 +27,12 @@ int main(int argc, char* argv[]) {
     }
 
     const char* alg = argv[1];
-    char* pattern = strdup(argv[2]);
+    char* pattern = malloc(strlen(argv[2]) + 1); 
+    if (!pattern) {
+        fprintf(stderr, "Error: malloc falló para pattern\n");
+        return EXIT_FAILURE;
+    }
+    strcpy(pattern, argv[2]);
     const char* filename = argv[3];
     const char* flags = (argc >= 5) ? argv[4] : "";
 

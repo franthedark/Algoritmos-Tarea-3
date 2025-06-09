@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static void preprocessBadChar(const char* pat, int badChar[256]) {
+void preprocessBadChar(const char* pat, int badChar[256]) {
     size_t M = strlen(pat);
     for (int i = 0; i < 256; i++) {
         badChar[i] = -1;
