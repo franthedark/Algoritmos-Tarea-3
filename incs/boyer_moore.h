@@ -3,18 +3,13 @@
 
 #include <stddef.h>
 
-/**
- * preprocessbadchar construye la tabla de bad‐character para boyer-moore
- * @param pat patron de busqueda (nulo-terminado)
- * @param badChar arreglo de tamaño 256 para almacenar saltos
- */
-void preprocessBadChar(const char* pat, int badChar[256]);
+//construye la tabla bad‐character para Boyer–Moore
+void preprocessBadChar(const char *pat, int badChar[256]);
 
-/**
- * searchboyermoore busca patron en texto usando boyer-moore
- * @param pattern patron de busqueda (nulo-terminado)
- * @param text texto donde buscar (nulo-terminado)
- */
-void searchBoyerMoore(const char* pattern, const char* text);
+//construye la tabla good‐suffix para Boyer–Moore
+void preprocessGoodSuffix(const char *pat, size_t M, size_t *shiftGS);
+
+//busca todas las ocurrencias con boyer–moore (bad‐char + good‐suffix)
+void searchBoyerMoore(const char *pattern, const char *text);
 
 #endif
