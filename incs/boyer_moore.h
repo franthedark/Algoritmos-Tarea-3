@@ -2,14 +2,24 @@
 #define BOYER_MOORE_H
 
 #include <stddef.h>
+#include <stdint.h>
 
-//construye la tabla bad‐character para Boyer–Moore
-void preprocessBadChar(const char *pat, int badChar[256]);
+//decodifica utf-8 en un array de code-points (liberar con free)
+uint32_t* decodeUTF8(const char *utf8, size_t *outLen);
 
-//construye la tabla good‐suffix para Boyer–Moore
-void preprocessGoodSuffix(const char *pat, size_t M, size_t *shiftGS);
+//bad-character mapa dinámico de code-points a ultimo indice
+typedef struct {
+    uint32_t cp;    //code-point Unicode
+    ptrdiff_t last; //ultima posicion en el patron
+} BMMapEntry;
 
-//busca todas las ocurrencias con boyer–moore (bad‐char + good‐suffix)
-void searchBoyerMoore(const char *pattern, const char *text);
+//construye el mapa bad-character para el patron unicode
+BMMapEntry* preprocessBadCharUnicode(const uint32_t *pat, size_t M, size_t *mapSize);
+
+//good-suffix sobre code-points
+void preprocessGoodSuffixUnicode(const uint32_t *pat, size_t M, size_t *shiftGS);
+
+//busqueda boyer–moore UTF-8
+void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8);
 
 #endif
