@@ -3,6 +3,9 @@
 #include <string.h>
 #include "search_algorithms.h"
 #include "utils.h"
+#include "KMP.h"
+#include "boyer_moore.h"
+
 
 static int endsWith(const char* str, const char* suffix) {
     size_t n = strlen(str), m = strlen(suffix);
@@ -64,7 +67,7 @@ int main(int argc, char* argv[]) {
     if (strcmp(alg, "kmp") == 0) {
         searchKMP(pattern, text);
     } else if (strcmp(alg, "bm") == 0) {
-        searchBoyerMoore(pattern, text);
+        searchBoyerMooreUnicode(pattern, text);
     } else if (strcmp(alg, "shiftand") == 0) {
         searchShiftAnd(pattern, text);
     } else {
