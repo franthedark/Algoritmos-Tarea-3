@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     } else if (strcmp(alg, "shiftand") == 0) {
         searchShiftAnd(pattern, text);
     } else {
-        fprintf(stderr, "Algoritmo '%s' no reconocido.\n", alg);
+        fprintf(stderr, "Algoritmo '%s' no reconocido. Recuerda que los algoritmos disponibles son:\n- Knuth-Morris-Pratt (kmp)\n- Boyer Moore (bm)\n- Shift-And (shiftand)\n", alg);
     }
 
     free(text);
