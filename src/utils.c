@@ -144,7 +144,7 @@ void convertir_a_minusculas(char *palabra) {
     int j = 0;
     for (int i = 0; palabra[i]; ) {
         unsigned char c = palabra[i];
-        if (c == 0xC3) { // UTF-8 accented character
+        if (c == 0xC3) { 
             unsigned char c2 = palabra[i+1];
             if (c2) {
                 i++;
@@ -162,7 +162,7 @@ void convertir_a_minusculas(char *palabra) {
                     case 0xB1: 
                         palabra[j++] = 'n'; break;  // ñ
                     default: 
-                        // Skip unrecognized UTF-8
+                        
                         i++;
                         continue;
                 }
@@ -170,9 +170,9 @@ void convertir_a_minusculas(char *palabra) {
             } else {
                 i++;
             }
-        } else if (c >= 128) { // Skip other non-ASCII characters
+        } else if (c >= 128) { 
             i++;
-        } else { // Handle ASCII characters
+        } else { 
             palabra[j++] = tolower(c);
             i++;
         }
@@ -223,7 +223,6 @@ static void decodeEntity(const char* start, char** output) {
             return;
         }
     } else {
-        // Named entities
         const char *entity = start;
         size_t len = strcspn(start, ";");
         
@@ -234,17 +233,13 @@ static void decodeEntity(const char* start, char** output) {
         else if (strncmp(entity, "apos", len) == 0) *(*output)++ = '\'';
         else if (strncmp(entity, "nbsp", len) == 0) *(*output)++ = ' ';
         else if (strncmp(entity, "copy", len) == 0) { *(*output)++ = 0xC2; *(*output)++ = 0xA9; }
-        // Add more entities as needed...
         else {
-            // Unknown entity - copy as-is
             *(*output)++ = '&';
             while (*start && *start != ';') *(*output)++ = *start++;
             if (*start == ';') *(*output)++ = ';';
             return;
         }
     }
-    
-    // Skip to semicolon
     while (*start && *start != ';') start++;
 }
 
@@ -261,7 +256,6 @@ char* stripHTML(const char* html) {
     for (size_t i = 0; i < len; i++) {
         if (!in_tag && !in_comment && !in_script) {
             if (html[i] == '<') {
-                // Check for comments or scripts
                 if (i + 4 < len && strncmp(html + i, "<!--", 4) == 0) {
                     in_comment = 1;
                     i += 3;
@@ -274,7 +268,6 @@ char* stripHTML(const char* html) {
             } else if (html[i] == '&') {
                 const char* start = html + i + 1;
                 decodeEntity(start, &out);
-                // Skip processed entity
                 while (html[i] != ';' && html[i] != '\0') i++;
             } else {
                 *out++ = html[i];
