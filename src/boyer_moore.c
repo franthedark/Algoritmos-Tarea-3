@@ -1,8 +1,10 @@
 #include "boyer_moore.h"
+#include "cli.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdint.h>
 
 //contadores para benchmarking
 static size_t bm_char_comparisons = 0;
@@ -17,12 +19,25 @@ uint32_t* decodeUTF8(const char *utf8, size_t *outLen) {
         uint32_t cp = 0;
         if (*p < 0x80) {
             cp = *p++;
-        } else if ((*p & 0xE0) == 0xC0 && (p[1]&0xC0)==0x80) {
-            cp = ((*p & 0x1F)<<6) | (p[1]&0x3F); p += 2;
-        } else if ((*p & 0xF0) == 0xE0 && (p[1]&0xC0)==0x80 && (p[2]&0xC0)==0x80) {
-            cp = ((*p & 0x0F)<<12)|((p[1]&0x3F)<<6)|(p[2]&0x3F); p+=3;
-        } else if ((*p & 0xF8) == 0xF0 && (p[1]&0xC0)==0x80 && (p[2]&0xC0)==0x80 && (p[3]&0xC0)==0x80) {
-            cp = ((*p & 0x07)<<18)|((p[1]&0x3F)<<12)|((p[2]&0x3F)<<6)|(p[3]&0x3F); p+=4;
+        } else if ((*p & 0xE0) == 0xC0 && (p[1] & 0xC0) == 0x80) {
+            cp = ((*p & 0x1F) << 6) | (p[1] & 0x3F);
+            p += 2;
+        } else if ((*p & 0xF0) == 0xE0 &&
+                   (p[1] & 0xC0) == 0x80 &&
+                   (p[2] & 0xC0) == 0x80) {
+            cp = ((*p & 0x0F) << 12) |
+                 ((p[1] & 0x3F) << 6) |
+                 (p[2] & 0x3F);
+            p += 3;
+        } else if ((*p & 0xF8) == 0xF0 &&
+                   (p[1] & 0xC0) == 0x80 &&
+                   (p[2] & 0xC0) == 0x80 &&
+                   (p[3] & 0xC0) == 0x80) {
+            cp = ((*p & 0x07) << 18) |
+                 ((p[1] & 0x3F) << 12) |
+                 ((p[2] & 0x3F) << 6) |
+                 (p[3] & 0x3F);
+            p += 4;
         } else {
             p++;
             continue;
@@ -98,7 +113,7 @@ void preprocessGoodSuffixUnicode(const uint32_t *pat, size_t M, size_t *shiftGS)
 
 void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
     if (!patternUTF8 || !textUTF8) {
-        fprintf(stderr, "searchBMUnicode: patrón o texto NULL\n");
+        printError("searchBMUnicode: patrón o texto NULL");
         return;
     }
 
@@ -111,7 +126,7 @@ void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
     uint32_t *txt = decodeUTF8(textUTF8, &N);
     if (!pat || !txt) {
         free(pat); free(txt);
-        fprintf(stderr, "searchBMUnicode: fallo al decodificar UTF-8\n");
+        printError("searchBMUnicode: fallo al decodificar UTF-8");
         return;
     }
     if (M == 0 || N == 0 || M > N) {
@@ -119,7 +134,7 @@ void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
         return;
     }
 
-    //bad-character dinamico
+    //bad-character dinámico
     size_t mapSize;
     BMMapEntry *bmMap = preprocessBadCharUnicode(pat, M, &mapSize);
     if (!bmMap) { free(pat); free(txt); return; }
@@ -142,12 +157,17 @@ void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
             }
         }
         if (j < 0) {
-            printf("Patrón encontrado en posición %zu (byte-offset aproximado)\n", s);
+            //coincidencia: imprimir fila de tabla
+            char pos[32];
+            sprintf(pos, "%zu", s);
+            const char *cells[] = { "bm", pos };
+            printTableRow(cells, 2);
+
             //shift por good-suffix
             s += shiftGS[0];
             bm_shifts++;
         } else {
-            //shift bad-character o good-suffix lo que sea mayor
+            //shift bad-character o good-suffix
             uint32_t c = txt[s + j];
             ptrdiff_t last = -1;
             for (size_t k = 0; k < mapSize; k++) {
@@ -165,7 +185,7 @@ void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
     free(bmMap);
     free(shiftGS);
 
-    //imprime metricas
+    //imprime métricas
     printf("[BM Unicode] Comparaciones: %zu, Shifts: %zu\n",
            bm_char_comparisons, bm_shifts);
 }

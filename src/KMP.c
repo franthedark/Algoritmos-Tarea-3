@@ -1,4 +1,5 @@
 #include "KMP.h"
+#include "cli.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +26,7 @@ void computeLPSArray(const char *pat, size_t M, int *lps) {
 
 void searchKMP(const char *pattern, const char *text) {
     if (!pattern || !text) {
-        fprintf(stderr, "searchKMP: patrón o texto NULL\n");
+        printError("searchKMP: patrón o texto NULL");
         return;
     }
 
@@ -35,32 +36,37 @@ void searchKMP(const char *pattern, const char *text) {
 
     size_t M = strlen(pattern), N = strlen(text);
     if (M == 0) {
-        fprintf(stderr, "searchKMP: patrón vacío\n");
+        printError("searchKMP: patrón vacío");
         return;
     }
     if (N == 0) {
-        fprintf(stderr, "searchKMP: texto vacío\n");
+        printError("searchKMP: texto vacío");
         return;
     }
     if (M > N) return;
 
     int *lps = malloc(M * sizeof(int));
     if (!lps) {
-        perror("searchKMP: malloc lps falló");
+        printError("searchKMP: malloc lps falló");
         return;
     }
     computeLPSArray(pattern, M, lps);
 
     size_t i = 0, j = 0;
     while (i < N) {
-        //comparacion de caracteres
+        //comparación de caracteres
         kmp_char_comparisons++;
         if (pattern[j] == text[i]) {
-            i++; 
+            i++;
             j++;
         }
         if (j == M) {
-            printf("Patrón encontrado en posición %zu\n", i - j);
+            //cada coincidencia como fila de tabla
+            char pos[32];
+            sprintf(pos, "%zu", i - j);
+            const char *cells[] = { "kmp", pos };
+            printTableRow(cells, 2);
+
             //acceso a lps para reiniciar j
             kmp_lps_accesses++;
             j = lps[j - 1];
@@ -102,16 +108,16 @@ void buildDFA(const char *pat, size_t M, int R, int *dfa) {
 
 void searchKMP_DFA(const char *pattern, const char *text) {
     if (!pattern || !text) {
-        fprintf(stderr, "searchKMP_DFA: patrón o texto NULL\n");
+        printError("searchKMP_DFA: patrón o texto NULL");
         return;
     }
     size_t M = strlen(pattern), N = strlen(text);
     if (M == 0) {
-        fprintf(stderr, "searchKMP_DFA: patrón vacío\n");
+        printError("searchKMP_DFA: patrón vacío");
         return;
     }
     if (N == 0) {
-        fprintf(stderr, "searchKMP_DFA: texto vacío\n");
+        printError("searchKMP_DFA: texto vacío");
         return;
     }
     if (M > N) return;
@@ -120,17 +126,23 @@ void searchKMP_DFA(const char *pattern, const char *text) {
     size_t nStates = M + 1;
     int *dfa = malloc(R * nStates * sizeof(int));
     if (!dfa) {
-        perror("searchKMP_DFA: malloc dfa falló");
+        printError("searchKMP_DFA: malloc dfa falló");
         return;
     }
     buildDFA(pattern, M, R, dfa);
 
     int state = 0;
-    for (size_t i = 0; i < N; i++) {
-        unsigned char c = (unsigned char)text[i];
-        state = dfa[c * nStates + state];
-        if (state == (int)M) {
-            printf("Patrón encontrado en posición %zu\n", i - M + 1);
+    while (state != (int)M) {
+        for (size_t i = 0; i < N; i++) {
+            unsigned char c = (unsigned char)text[i];
+            state = dfa[c * nStates + state];
+            if (state == (int)M) {
+                //coincidencia con DFA; imprimimos como fila
+                char pos[32];
+                sprintf(pos, "%zu", i - M + 1);
+                const char *cells[] = { "kmp_dfa", pos };
+                printTableRow(cells, 2);
+            }
         }
     }
 

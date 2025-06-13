@@ -13,7 +13,7 @@ SRCS = src/main.c \
        src/indexer.c \
        src/persistence.c \
        src/index_operations.c \
-	   src/normalization.c
+	   src/cli.c
 
 OBJS = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SRCS))
 
@@ -22,6 +22,8 @@ all: setup $(TARGET)
 setup:
 	@mkdir -p $(OBJDIR)
 	@mkdir -p $(BINDIR)
+	@mkdir -p indexes
+	@mkdir -p backups
 
 $(OBJDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC_DIRS) -c $< -o $@
@@ -46,9 +48,9 @@ run:
 	@echo "Para ejecutar el programa, usa uno de los siguientes comandos:"
 	@echo ""
 	@echo "=== BÚSQUEDA DE PATRONES ==="
-	@echo "  make run-kmp PAT=\"abc\" FILE=texto.txt OPT="--opciones\""
-	@echo "  make run-bm PAT=\"palabra\" FILE=documento.html OPT=\"--opciones\""
-	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt OPT=\"--opciones\""
+	@echo "  make run-kmp PAT=\"abc\" FILE=texto.txt"
+	@echo "  make run-bm PAT=\"palabra\" FILE=documento.html"
+	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt"
 	@echo ""
 	@echo "=== GESTIÓN DE ÍNDICES ==="
 	@echo "  make create-index DIR=docs"
@@ -64,22 +66,18 @@ run:
 # Ejecución del programa con diferentes algoritmos
 run-%: $(TARGET)
 	@if [ -z "$(PAT)" ] || [ -z "$(FILE)" ]; then \
-		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo [OPTS=\"--opciones\"]"; \
-		echo "Ejemplos:"; \
-		echo "  make run-kmp PAT=\"texto\" FILE=archivo.txt"; \
-		echo "  make run-bm PAT=\"patrón\" FILE=doc.html OPTS=\"--no-diacritics\""; \
-		echo "  make run-shiftand PAT=\"café\" FILE=texto.txt OPTS=\"--nfc\""; \
+		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo"; \
 		exit 1; \
 	fi
-	@NORM_OPTS=$${OPTS:-}; \
-	if [ -f "docs/$(FILE)" ]; then \
-		./$(TARGET) $* "$(PAT)" "docs/$(FILE)" $$NORM_OPTS; \
+	@if [ -f "docs/$(FILE)" ]; then \
+		./$(TARGET) $* "$(PAT)" "docs/$(FILE)"; \
 	elif [ -f "$(FILE)" ]; then \
-		./$(TARGET) $* "$(PAT)" "$(FILE)" $$NORM_OPTS; \
+		./$(TARGET) $* "$(PAT)" "$(FILE)"; \
 	else \
 		echo "Error: Archivo '$(FILE)' no encontrado en el directorio actual ni en docs/"; \
 		exit 1; \
 	fi
+
 # ============================================================================
 # COMANDOS DE GESTIÓN DE ÍNDICES
 # ============================================================================
@@ -203,7 +201,11 @@ list-backups:
 		echo "No hay backups creados aún."; \
 	fi
 
-# Ayuda completa
+# Benchmark automático
+.PHONY: benchmark
+benchmark:
+	@./tools/benchmark.sh
+
 # Ayuda completa
 help:
 	@echo "=== BUSCADOR DE PATRONES E INDEXADOR ==="
@@ -214,19 +216,9 @@ help:
 	@echo "  make clean-all    - Limpiar todo (incluye índices y backups)"
 	@echo ""
 	@echo "BÚSQUEDA DE PATRONES:"
-	@echo "  make run-kmp PAT=\"patrón\" FILE=archivo.txt [OPTS=\"--opciones\"]"
-	@echo "  make run-bm PAT=\"patrón\" FILE=archivo.html [OPTS=\"--opciones\"]"
-	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt [OPTS=\"--opciones\"]"
-	@echo ""
-	@echo "OPCIONES DE NORMALIZACIÓN:"
-	@echo "  OPTS=\"--basic\"         - Normalización básica (defecto)"
-	@echo "  OPTS=\"--no-diacritics\" - Eliminar acentos y tildes"
-	@echo "  OPTS=\"--nfc\"           - Normalización Unicode NFC"
-	@echo "  OPTS=\"--nfd\"           - Normalización Unicode NFD"
-	@echo ""
-	@echo "EJEMPLOS:"
-	@echo "  make run-bm PAT=\"café\" FILE=texto.txt OPTS=\"--nfc\""
-	@echo "  make run-kmp PAT=\"Además\" FILE=doc.html OPTS=\"--no-diacritics\""
+	@echo "  make run-kmp PAT=\"patrón\" FILE=archivo.txt"
+	@echo "  make run-bm PAT=\"patrón\" FILE=archivo.html"
+	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt"
 	@echo ""
 	@echo "GESTIÓN DE ÍNDICES:"
 	@echo "  make create-index DIR=docs [INDEX=nombre.idx]"

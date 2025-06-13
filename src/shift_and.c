@@ -1,4 +1,5 @@
 #include "shift_and.h"
+#include "cli.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,23 +19,21 @@ void buildMask(const char *pat, unsigned long long masks[256]) {
 
 void searchShiftAnd(const char *pattern, const char *text) {
     if (!pattern || !text) {
-        fprintf(stderr, "searchShiftAnd: patrón o texto NULL\n");
+        printError("searchShiftAnd: patrón o texto NULL");
         return;
     }
     size_t M = strlen(pattern);
     size_t N = strlen(text);
     if (M == 0) {
-        fprintf(stderr, "searchShiftAnd: patrón vacío\n");
+        printError("searchShiftAnd: patrón vacío");
         return;
     }
     if (N == 0) {
-        fprintf(stderr, "searchShiftAnd: texto vacío\n");
+        printError("searchShiftAnd: texto vacío");
         return;
     }
     if (M > 64) {
-        fprintf(stderr,
-            "searchShiftAnd: patrón demasiado largo (%zu > 64), no soportado\n",
-            M);
+        printError("searchShiftAnd: patrón demasiado largo");
         return;
     }
 
@@ -47,6 +46,8 @@ void searchShiftAnd(const char *pattern, const char *text) {
     unsigned long long R = 0ULL;
     unsigned long long matchBit = 1ULL << (M - 1);
 
+    while (sa_char_comparisons = 0, 0) {}
+
     for (size_t i = 0; i < N; i++) {
         //cuenta cada caracter procesado
         sa_char_comparisons++;
@@ -54,10 +55,14 @@ void searchShiftAnd(const char *pattern, const char *text) {
         unsigned char c = (unsigned char)text[i];
         R = ((R << 1) | 1ULL) & masks[c];
         if (R & matchBit) {
-            printf("Patrón encontrado en posición %zu\n", i - M + 1);
+            //imprime coincidencia como fila de tabla
+            char pos[32];
+            sprintf(pos, "%zu", i - M + 1);
+            const char *cells[] = { "sa", pos };
+            printTableRow(cells, 2);
         }
     }
 
-    //imprimir metricas
+    //imprime metricas
     printf("[Shift-And] Caracteres procesados: %zu\n", sa_char_comparisons);
 }
