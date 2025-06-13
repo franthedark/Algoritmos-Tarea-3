@@ -36,8 +36,7 @@ clean:
 
 # Limpiar también archivos de índices y backups
 clean-all: clean
-	rm -rf indexes
-	rm -rf backups
+	rm -rf indexes backups
 
 # ============================================================================
 # COMANDOS DE BÚSQUEDA TRADICIONAL
@@ -206,7 +205,15 @@ list-backups:
 benchmark:
 	@./tools/benchmark.sh
 
-# Ayuda completa
+fetch-corpus:
+	@echo "Descargando corpus de prueba..."
+	@bash tools/fetch_corpus/fetch_corpus.sh
+
+clean-corpus:
+	@echo "Limpiando corpus..."
+	@rm docs/corpus/alice.txt docs/corpus/sherlock.txt docs/corpus/sms_spam.csv docs/corpus/wikipedia-sample.txt docs/corpus/README.md tools/strip_html/strip_html
+	@echo "Corpus limpiado."
+
 help:
 	@echo "=== BUSCADOR DE PATRONES E INDEXADOR ==="
 	@echo ""
@@ -234,4 +241,4 @@ help:
 	@echo "  make list-backups - Mostrar backups disponibles"
 	@echo "  make help         - Mostrar esta ayuda"
 
-.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help
+.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help fetch-corpus clean-corpus
