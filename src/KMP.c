@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+//contadores para benchmarking
+static size_t kmp_char_comparisons = 0;
+static size_t kmp_lps_accesses     = 0;
+
 void computeLPSArray(const char *pat, size_t M, int *lps) {
     if (!pat || !lps || M == 0) return;
     lps[0] = 0;
@@ -24,6 +28,11 @@ void searchKMP(const char *pattern, const char *text) {
         fprintf(stderr, "searchKMP: patrón o texto NULL\n");
         return;
     }
+
+    //reinicia contadores
+    kmp_char_comparisons = 0;
+    kmp_lps_accesses     = 0;
+
     size_t M = strlen(pattern), N = strlen(text);
     if (M == 0) {
         fprintf(stderr, "searchKMP: patrón vacío\n");
@@ -44,21 +53,33 @@ void searchKMP(const char *pattern, const char *text) {
 
     size_t i = 0, j = 0;
     while (i < N) {
+        //comparacion de caracteres
+        kmp_char_comparisons++;
         if (pattern[j] == text[i]) {
-            i++; j++;
+            i++; 
+            j++;
         }
         if (j == M) {
             printf("Patrón encontrado en posición %zu\n", i - j);
+            //acceso a lps para reiniciar j
+            kmp_lps_accesses++;
             j = lps[j - 1];
         } else if (i < N && pattern[j] != text[i]) {
             if (j != 0) {
+                //acceso a lps para fallback
+                kmp_lps_accesses++;
                 j = lps[j - 1];
             } else {
                 i++;
             }
         }
     }
+
     free(lps);
+
+    //imprime metricas
+    printf("[KMP] Comparaciones: %zu, Accesos LPS: %zu\n",
+           kmp_char_comparisons, kmp_lps_accesses);
 }
 
 void buildDFA(const char *pat, size_t M, int R, int *dfa) {
@@ -112,5 +133,6 @@ void searchKMP_DFA(const char *pattern, const char *text) {
             printf("Patrón encontrado en posición %zu\n", i - M + 1);
         }
     }
+
     free(dfa);
 }
