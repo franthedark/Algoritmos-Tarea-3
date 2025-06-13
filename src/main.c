@@ -6,6 +6,7 @@
 #include "KMP.h"
 #include "boyer_moore.h"
 #include "index_operations.h"
+#include "normalization.h"
 
 static int endsWith(const char* str, const char* suffix) {
     size_t n = strlen(str), m = strlen(suffix);
@@ -17,19 +18,27 @@ static void printUsage(const char* program_name) {
     fprintf(stderr,
         "Uso:\n"
         "  Búsqueda de patrones:\n"
-        "    %s <algoritmo> <patrón> <archivo>\n"
+        "    %s <algoritmo> <patrón> <archivo> [opciones]\n"
         "    algoritmos disponibles: kmp, bm, shiftand\n"
+        "\n"
+        "  Opciones de normalización:\n"
+        "    --no-diacritics    Eliminar diacríticos (tildes, acentos)\n"
+        "    --nfc              Normalización canónica compuesta\n"
+        "    --nfd              Normalización canónica descompuesta\n"
+        "    --basic            Usar normalización básica (por defecto)\n"
         "\n",
         program_name
     );
-    
+   
     // Mostrar también la ayuda de índices
     printIndexUsage(program_name);
-    
+   
     fprintf(stderr,
         "\nEjemplos:\n"
-        "  %s bm \"patrón\" documento.html\n",
-        program_name
+        "  %s bm \"patrón\" documento.html\n"
+        "  %s bm \"patrón\" documento.txt --no-diacritics\n"
+        "  %s kmp \"café\" texto.txt --nfc\n",
+        program_name, program_name, program_name
     );
 }
 
@@ -38,18 +47,18 @@ int main(int argc, char* argv[]) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
-    
+   
     // Verificar si es un comando de índice
     if (strcmp(argv[1], "index") == 0) {
         return handleIndexCommands(argc, argv);
     }
-    
+   
     // Funcionalidad original de búsqueda de patrones
     if (argc < 4) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
     }
-    
+   
     const char* alg = argv[1];
     char* pattern = malloc(strlen(argv[2]) + 1);
     if (!pattern) {
@@ -59,13 +68,16 @@ int main(int argc, char* argv[]) {
     strcpy(pattern, argv[2]);
     const char* filename = argv[3];
     
+    // Parsear opciones de normalización
+    NormalizationOptions norm_opts = parseNormalizationOptions(argc, argv);
+   
     // Cargar archivo
     char* raw = loadFile(filename);
     if (!raw) {
         free(pattern);
         return EXIT_FAILURE;
     }
-    
+   
     // Procesar HTML si es necesario
     char* text;
     if (endsWith(filename, ".html") || endsWith(filename, ".htm")) {
@@ -79,17 +91,15 @@ int main(int argc, char* argv[]) {
     } else {
         text = raw;
     }
-    
-    // Normalización automática (siempre se aplica)
-    convertir_a_minusculas(text);
-    limpiar_palabra(text);
-    convertir_a_minusculas(pattern);
-    limpiar_palabra(pattern);
-    
+   
+    // Aplicar normalización según las opciones
+    applyNormalization(text, pattern, &norm_opts);
+   
     // Ejecutar algoritmo seleccionado
-    printf(">>> Algoritmo: %s | Patrón: \"%s\" | Archivo: %s\n\n",
+    printf(">>> Algoritmo: %s | Patrón original: \"%s\" | Archivo: %s\n",
            alg, argv[2], filename);
-    
+    printf(">>> Patrón normalizado: \"%s\"\n\n", pattern);
+   
     if (strcmp(alg, "kmp") == 0) {
         searchKMP(pattern, text);
     } else if (strcmp(alg, "bm") == 0) {
@@ -102,7 +112,7 @@ int main(int argc, char* argv[]) {
         free(pattern);
         return EXIT_FAILURE;
     }
-    
+   
     free(text);
     free(pattern);
     return EXIT_SUCCESS;
