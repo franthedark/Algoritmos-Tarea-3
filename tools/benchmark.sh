@@ -9,10 +9,10 @@ CMD="$ROOT/build/buscador"
 OUTPUT="$ROOT/results/benchmark.csv"
 mkdir -p "$(dirname "$OUTPUT")"
 
-# Algoritmos (subcomandos tal como tu Makefile los reconoce)
+# Algoritmos
 ALGS=( kmp bm shiftand )
 
-# Corpora de prueba
+# Corpus de prueba
 CORPORA=(
   "$ROOT/docs/corpus/sample_100k.txt"
   "$ROOT/docs/corpus/sample_500k.txt"
@@ -26,11 +26,11 @@ PATTERNS=(
   "dolor"
 )
 
-# Cabecera del CSV
-echo "algoritmo,corpus,tamano_bytes,tiempo_s,comparaciones,shifts" > "$OUTPUT"
+# Cabecera CSV con patrón incluido
+echo "algoritmo,patron,corpus,tamano_bytes,tiempo_s,comparaciones,shifts" > "$OUTPUT"
 
 # --------------------------------------------------------------------------
-# Loop principal de benchmark
+# Loop principal
 # --------------------------------------------------------------------------
 for corpus in "${CORPORA[@]}"; do
   if [ ! -f "$corpus" ]; then
@@ -44,16 +44,13 @@ for corpus in "${CORPORA[@]}"; do
     for alg in "${ALGS[@]}"; do
       echo "   * $alg '$pattern'"
 
-      # Archivo temporal para capturar salida estándar
       out=$(mktemp)
 
-      # Medición de tiempo con nanosegundos de precisión
       start=$(date +%s.%N)
       "$CMD" "$alg" "$pattern" "$corpus" >"$out"
       end=$(date +%s.%N)
       time_s=$(echo "scale=20; $end - $start" | bc)
 
-      # Extraer contadores de la salida
       comp=0
       shifts=0
       case "$alg" in
@@ -71,8 +68,8 @@ for corpus in "${CORPORA[@]}"; do
 
       rm -f "$out"
 
-      # Añadir línea al CSV
-      echo "$alg,$(basename "$corpus"),$size,$time_s,$comp,$shifts" >> "$OUTPUT"
+      # Agregar línea con patrón incluido
+      echo "$alg,\"$pattern\",$(basename "$corpus"),$size,$time_s,$comp,$shifts" >> "$OUTPUT"
       echo "      -> tiempo=${time_s}s, comp=${comp}, shifts=${shifts}"
     done
   done
