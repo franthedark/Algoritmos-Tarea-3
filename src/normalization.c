@@ -12,19 +12,19 @@ NormalizationOptions parseNormalizationOptions(int argc, char* argv[]) {
     };
     
     for (int i = 4; i < argc; i++) {
-        if (strcmp(argv[i], "--no-diacritics") == 0) {
+        if (strcmp(argv[i], "no-diacritics") == 0) {
             opts.remove_diacritics = 1;
             opts.use_unicode_advanced = 1;
             opts.use_basic_normalization = 0;
-        } else if (strcmp(argv[i], "--nfc") == 0) {
+        } else if (strcmp(argv[i], "nfc") == 0) {
             opts.norm_form = UNICODE_NFC;
             opts.use_unicode_advanced = 1;
             opts.use_basic_normalization = 0;
-        } else if (strcmp(argv[i], "--nfd") == 0) {
+        } else if (strcmp(argv[i], "nfd") == 0) {
             opts.norm_form = UNICODE_NFD;
             opts.use_unicode_advanced = 1;
             opts.use_basic_normalization = 0;
-        } else if (strcmp(argv[i], "--basic") == 0) {
+        } else if (strcmp(argv[i], "basic") == 0) {
             opts.use_basic_normalization = 1;
             opts.use_unicode_advanced = 0;
         }

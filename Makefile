@@ -13,7 +13,8 @@ SRCS = src/main.c \
        src/indexer.c \
        src/persistence.c \
        src/index_operations.c \
-	   src/cli.c
+	   src/cli.c \
+	   src/normalization.c \
 
 OBJS = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SRCS))
 
@@ -32,11 +33,11 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INC_DIRS) -o $@ $(OBJS)
 
 clean:
-	rm -rf build obj
+	rm -rf build obj indexes backups results
 
 # Limpiar también archivos de índices y backups
-clean-all: clean
-	rm -rf indexes backups
+clean-all: clean clean-corpus
+	rm -rf indexes backups results
 
 # ============================================================================
 # COMANDOS DE BÚSQUEDA TRADICIONAL
@@ -44,34 +45,33 @@ clean-all: clean
 
 run:
 	@echo "Bienvenido al buscador de patrones."
-	@echo "Para ejecutar el programa, usa uno de los siguientes comandos:"
+	@echo "Programa desarrollado por Diego Galindo y Francisco Mercado."
+	@echo "Para ejecutar el programa, use uno de los siguientes comandos:"
 	@echo ""
 	@echo "=== BÚSQUEDA DE PATRONES ==="
-	@echo "  make run-kmp PAT=\"abc\" FILE=texto.txt"
-	@echo "  make run-bm PAT=\"palabra\" FILE=documento.html"
-	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt"
+	@echo "  make run-kmp PAT=\"abc\" FILE=texto.txt [OPTS=opciones]"
+	@echo "  make run-bm PAT=\"palabra\" FILE=documento.html [OPTS=opciones]"
+	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt [OPTS=opciones]"
 	@echo ""
-	@echo "=== GESTIÓN DE ÍNDICES ==="
-	@echo "  make create-index DIR=docs"
-	@echo "  make search-index TERM=\"palabra\""
-	@echo "  make index-info"
-	@echo "  make export-index OUTPUT=indice.txt"
-	@echo "  make backup-index"
+	@echo "El uso de OPTS es opcional y puede ser:"
+	@echo "  OPTS=basic         - Normalización básica (defecto)"
+	@echo "  OPTS=no-diacritics - Eliminar acentos y tildes"
+	@echo "  OPTS=nfc          - Normalización Unicode NFC"
+	@echo "  OPTS=nfd          - Normalización Unicode NFD"
 	@echo ""
-	@echo "(Los archivos .txt deben estar en el directorio docs/)"
-	@echo "Programa desarrollado por Diego Galindo y Francisco Mercado."
+	@echo "(Los archivos de texto deben estar en el directorio docs/. Si no está en ese directorio, especifique la ruta completa.)"
 	@echo "Para más información, use make help o consulte el README."
 
 # Ejecución del programa con diferentes algoritmos
 run-%: $(TARGET)
 	@if [ -z "$(PAT)" ] || [ -z "$(FILE)" ]; then \
-		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo"; \
+		echo "Uso: make run-ALGORITMO PAT=\"patrón\" FILE=archivo OPTS=ajuste"; \
 		exit 1; \
 	fi
 	@if [ -f "docs/$(FILE)" ]; then \
-		./$(TARGET) $* "$(PAT)" "docs/$(FILE)"; \
+		./$(TARGET) $* "$(PAT)" "docs/$(FILE)" $(OPTS); \
 	elif [ -f "$(FILE)" ]; then \
-		./$(TARGET) $* "$(PAT)" "$(FILE)"; \
+		./$(TARGET) $* "$(PAT)" "$(FILE)" $(OPTS); \
 	else \
 		echo "Error: Archivo '$(FILE)' no encontrado en el directorio actual ni en docs/"; \
 		exit 1; \
@@ -200,19 +200,32 @@ list-backups:
 		echo "No hay backups creados aún."; \
 	fi
 
+# ============================================================================
+# COMANDOS DE HERRAMIENTAS Y UTILIDADES
+# ============================================================================
+
+
 # Benchmark automático
 .PHONY: benchmark
 benchmark:
 	@./tools/benchmark.sh
 
+graph:
+	@python3 tools/graficar_benchmark.py
+
 fetch-corpus:
 	@echo "Descargando corpus de prueba..."
 	@bash tools/fetch_corpus/fetch_corpus.sh
 
+FILES_TO_CLEAN = docs/corpus/alice.txt docs/corpus/sherlock.txt docs/corpus/sms_spam.csv docs/corpus/wikipedia-sample.txt docs/corpus/README.md tools/strip_html/strip_html
+
 clean-corpus:
-	@echo "Limpiando corpus..."
-	@rm docs/corpus/alice.txt docs/corpus/sherlock.txt docs/corpus/sms_spam.csv docs/corpus/wikipedia-sample.txt docs/corpus/README.md tools/strip_html/strip_html
-	@echo "Corpus limpiado."
+	@if ls $(FILES_TO_CLEAN) >/dev/null 2>&1; then \
+		rm -f $(FILES_TO_CLEAN); \
+		echo "Corpus limpiado."; \
+	else \
+		: ; \
+	fi
 
 help:
 	@echo "=== BUSCADOR DE PATRONES E INDEXADOR ==="
@@ -223,9 +236,19 @@ help:
 	@echo "  make clean-all    - Limpiar todo (incluye índices y backups)"
 	@echo ""
 	@echo "BÚSQUEDA DE PATRONES:"
-	@echo "  make run-kmp PAT=\"patrón\" FILE=archivo.txt"
-	@echo "  make run-bm PAT=\"patrón\" FILE=archivo.html"
-	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.txt"
+	@echo "  make run-kmp PAT=\"patrón\" FILE=archivo.txt OPTS=opciones"
+	@echo "  make run-bm PAT=\"patrón\" FILE=archivo.html OPTS=opciones"
+	@echo "  make run-shiftand PAT=\"patrón\" FILE=archivo.csv OPTS=opciones"
+	@echo ""
+	@echo "OPCIONES DE NORMALIZACIÓN:"
+	@echo "  OPTS=basic        - Normalización básica (defecto)"
+	@echo "  OPTS=no-diacritics - Eliminar acentos y tildes"
+	@echo "  OPTS=nfc           - Normalización Unicode NFC (Composición)"
+	@echo "  OPTS=nfd          - Normalización Unicode NFD (Descomposición)"
+	@echo ""
+	@echo "EJEMPLOS:"
+	@echo "  make run-bm PAT=\"café\" FILE=texto.txt OPTS=nfc"
+	@echo "  make run-kmp PAT=\"Además\" FILE=doc.html OPTS=no-diacritics"
 	@echo ""
 	@echo "GESTIÓN DE ÍNDICES:"
 	@echo "  make create-index DIR=docs [INDEX=nombre.idx]"
@@ -240,5 +263,12 @@ help:
 	@echo "  make list-indexes - Mostrar índices disponibles"
 	@echo "  make list-backups - Mostrar backups disponibles"
 	@echo "  make help         - Mostrar esta ayuda"
+	@echo ""
+	@echo "HERRAMIENTAS ADICIONALES:"
+	@echo "  make fetch-corpus - Descargar corpus de prueba"
+	@echo "  make clean-corpus - Limpiar corpus descargado"
+	@echo "  make benchmark    - Ejecutar benchmark automático"
+	@echo "  make graph        - Graficar resultados del benchmark"
+	@echo ""
 
-.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help fetch-corpus clean-corpus
+.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help fetch-corpus clean-corpus benchmark graph

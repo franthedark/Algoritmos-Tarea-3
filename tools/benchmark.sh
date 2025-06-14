@@ -27,7 +27,7 @@ PATTERNS=(
 )
 
 # Cabecera CSV con patrón incluido
-echo "algoritmo,patron,corpus,tamano_bytes,tiempo_s,comparaciones,shifts" > "$OUTPUT"
+echo "algoritmo,corpus,tamano_bytes,patron,tiempo_s,comparaciones,shifts" > "$OUTPUT"
 
 # --------------------------------------------------------------------------
 # Loop principal
@@ -69,7 +69,7 @@ for corpus in "${CORPORA[@]}"; do
       rm -f "$out"
 
       # Agregar línea con patrón incluido
-      echo "$alg,\"$pattern\",$(basename "$corpus"),$size,$time_s,$comp,$shifts" >> "$OUTPUT"
+      echo "$alg,$(basename "$corpus"),$size,\"$pattern\",$time_s,$comp,$shifts" >> "$OUTPUT"
       echo "      -> tiempo=${time_s}s, comp=${comp}, shifts=${shifts}"
     done
   done

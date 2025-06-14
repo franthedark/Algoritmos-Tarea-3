@@ -7,6 +7,7 @@
 #include "boyer_moore.h"
 #include "shift_and.h"
 #include "index_operations.h"
+#include "normalization.h"
 
 static int endsWith(const char* str, const char* suffix) {
     size_t n = strlen(str), m = strlen(suffix);
@@ -36,12 +37,12 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    //comandos de indice
+    // comandos de indice
     if (strcmp(argv[1], "index") == 0) {
         return handleIndexCommands(argc, argv);
     }
 
-    //busqueda de patrones
+    // busqueda de patrones
     if (argc < 4) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
@@ -51,7 +52,7 @@ int main(int argc, char* argv[]) {
     const char* patArg = argv[2];
     const char* filename = argv[3];
 
-    //copia patron a un buffer modificable
+    // copia patron a un buffer modificable
     char* pattern = malloc(strlen(patArg) + 1);
     if (!pattern) {
         printError("malloc falló para pattern");
@@ -59,14 +60,14 @@ int main(int argc, char* argv[]) {
     }
     strcpy(pattern, patArg);
 
-    //lee archivo completo
+    // lee archivo completo
     char* raw = loadFile(filename);
     if (!raw) {
         free(pattern);
         return EXIT_FAILURE;
     }
 
-    //si es html elimina etiquetas y entidades
+    // si es html elimina etiquetas y entidades
     char* text;
     if (endsWith(filename, ".html") || endsWith(filename, ".htm")) {
         text = stripHTML(raw);
@@ -80,17 +81,26 @@ int main(int argc, char* argv[]) {
         text = raw;
     }
 
-    //preprocesamiento minusculas y limpieza
-    convertir_a_minusculas(text);
-    limpiar_palabra(text);
-    convertir_a_minusculas(pattern);
-    limpiar_palabra(pattern);
+    // ======================================================================
+    // NUEVO: ANALIZAR Y APLICAR NORMALIZACIÓN (REEMPLAZA EL PREPROCESAMIENTO)
+    // ======================================================================
+    
+    // Analizar opciones de normalización (--nfc, --no-diacritics, etc.)
+    NormalizationOptions norm_opts = parseNormalizationOptions(argc, argv);
+    
+    // Aplicar normalización al texto y patrón
+    applyNormalization(text, pattern, &norm_opts);
+    
+    // Mostrar información de depuración
+    printf(">>> Algoritmo: %s | Patrón original: \"%s\" | Archivo: %s\n", 
+           alg, patArg, filename);
+    printf(">>> Patrón normalizado: \"%s\"\n\n", pattern);
 
-    //encabezado de tabla
+    // encabezado de tabla
     const char* cols[] = { "Algoritmo", "Posición" };
     printTableHeader(cols, 2);
 
-    //ejecuta el algoritmo seleccionado
+    // ejecuta el algoritmo seleccionado
     if (strcmp(alg, "kmp") == 0) {
         searchKMP(pattern, text);
     }
