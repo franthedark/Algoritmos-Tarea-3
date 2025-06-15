@@ -99,7 +99,6 @@ int main(int argc, char* argv[]) {
     // encabezado de tabla
     const char* cols[] = { "Algoritmo", "Posición" };
     printTableHeader(cols, 2);
-
     // ejecuta el algoritmo seleccionado
     if (strcmp(alg, "kmp") == 0) {
         searchKMP(pattern, text);
@@ -118,7 +117,6 @@ int main(int argc, char* argv[]) {
         free(pattern);
         return EXIT_FAILURE;
     }
-
     free(text);
     free(pattern);
     return EXIT_SUCCESS;

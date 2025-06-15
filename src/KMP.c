@@ -80,7 +80,7 @@ void searchKMP(const char *pattern, const char *text) {
             }
         }
     }
-
+    printTableFooter(2);
     free(lps);
 
     //imprime metricas

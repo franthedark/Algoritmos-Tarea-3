@@ -1,5 +1,6 @@
 #include "boyer_moore.h"
 #include "cli.h"
+#include "normalization.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -179,6 +180,8 @@ void searchBoyerMooreUnicode(const char *patternUTF8, const char *textUTF8) {
             bm_shifts++;
         }
     }
+
+    printTableFooter(2);
 
     free(pat);
     free(txt);

@@ -63,6 +63,8 @@ void searchShiftAnd(const char *pattern, const char *text) {
         }
     }
 
+    printTableFooter(2);
+
     //imprime metricas
     printf("[Shift-And] Caracteres procesados: %zu\n", sa_char_comparisons);
 }
