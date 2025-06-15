@@ -13,4 +13,5 @@ typedef struct {
 double jaccard_similarity(const char *doc1, const char *doc2);
 double cosine_similarity(const char *doc1, const char *doc2);
 
+
 #endif
