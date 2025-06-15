@@ -26,21 +26,44 @@ static const char* colorForAlgorithm(const char* alg) {
 }
 
 void printTableHeader(const char **cols, int nCols) {
+    // Calcular anchos de columnas
     for (int i = 0; i < nCols; i++) {
         int len = (int)strlen(cols[i]);
         col_w[i] = len;
     }
 
+    // Línea superior de la tabla
+    printf("+");
+    for (int i = 0; i < nCols; i++) {
+        int w = col_w[i] + 2;
+        for (int j = 0; j < w; j++) printf("-");
+        printf("+");
+    }
+    printf("\n");
+
+    // Encabezado de columnas
     printf("|");
     for (int i = 0; i < nCols; i++) {
         printf(" %-*s |", col_w[i], cols[i]);
     }
-    printf("\n|");
+    printf("\n");
 
+    // Línea separadora
+    printf("+");
     for (int i = 0; i < nCols; i++) {
         int w = col_w[i] + 2;
         for (int j = 0; j < w; j++) printf("-");
-        printf("|");
+        printf("+");
+    }
+    printf("\n");
+}
+
+void printTableFooter(int nCols) {
+    printf("+");
+    for (int i = 0; i < nCols; i++) {
+        int w = col_w[i] + 2;
+        for (int j = 0; j < w; j++) printf("-");
+        printf("+");
     }
     printf("\n");
 }
