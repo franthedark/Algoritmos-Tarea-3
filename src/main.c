@@ -8,6 +8,7 @@
 #include "shift_and.h"
 #include "index_operations.h"
 #include "normalization.h"
+#include "similarity.h"
 
 static int endsWith(const char* str, const char* suffix) {
     size_t n = strlen(str), m = strlen(suffix);
@@ -41,6 +42,34 @@ int main(int argc, char* argv[]) {
     if (strcmp(argv[1], "index") == 0) {
         return handleIndexCommands(argc, argv);
     }
+
+    if (strcmp(argv[1], "similarity") == 0 && argc == 4) {
+    const char* file1 = argv[2];
+    const char* file2 = argv[3];
+    
+    char* content1 = loadFile(file1);
+    char* content2 = loadFile(file2);
+    
+    if (!content1 || !content2) {
+        printError("Error cargando archivos");
+        free(content1);
+        free(content2);
+        return EXIT_FAILURE;
+    }
+    
+    double jaccard = jaccard_similarity(content1, content2);
+    double cosine = cosine_similarity(content1, content2);
+    
+    printf("\n=== Análisis de Similitud Directa ===\n");
+    printf("Archivo 1: %s\n", file1);
+    printf("Archivo 2: %s\n", file2);
+    printf("Jaccard: %.4f\n", jaccard);
+    printf("Coseno:  %.4f\n", cosine);
+    
+    free(content1);
+    free(content2);
+    return EXIT_SUCCESS;
+}
 
     // busqueda de patrones
     if (argc < 4) {

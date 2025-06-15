@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "indexer.h"
 #include "persistence.h"
+#include "similarity.h"
 
 // Definir DT_REG si no está disponible
 #ifndef DT_REG
@@ -59,20 +60,21 @@ char* buildIndexPath(const char* index_file) {
 
 void printIndexUsage(const char* program_name) {
     fprintf(stderr,
-        "Gestión de índices:\n"
+        "Gestión de índices y análisis de similitud:\n"
         "  %s index create <directorio> [archivo_indice.idx]\n"
         "  %s index search <archivo_indice.idx> <término>\n"
         "  %s index info <archivo_indice.idx>\n"
         "  %s index export <archivo_indice.idx> <archivo_salida.txt>\n"
         "  %s index backup <archivo_indice.idx> <directorio_backup>\n"
-        "\n"
-        "Nota: Los archivos .idx se guardan automáticamente en la carpeta 'indices/'\n"
+        "  %s index similarity <índice> <doc_id1> <doc_id2>\n"
+        "  %s index similarity-indexed <índice> <doc_id> [top_k]\n"
         "\n"
         "Ejemplos:\n"
-        "  %s index create ./docs index.idx\n"
-        "  %s index search index.idx \"término\"\n",
+        "  %s index similarity index.idx 1 5\n"
+        "  %s index similarity-indexed index.idx 3 10\n",
         program_name, program_name, program_name, 
-        program_name, program_name, program_name, program_name
+        program_name, program_name, program_name, program_name,
+        program_name, program_name
     );
 }
 
@@ -417,9 +419,194 @@ int handleIndexCommands(int argc, char* argv[]) {
         
         return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
         
-    } else {
+    } else if (strcmp(command, "similarity") == 0) {
+    if (argc < 6) {
+        fprintf(stderr, "Error: Faltan argumentos para similitud\n");
+        printIndexUsage(argv[0]);
+        return EXIT_FAILURE;
+    }
+    
+    const char* index_file = argv[3];
+    const char* doc_id1 = argv[4];
+    const char* doc_id2 = argv[5];
+    
+    return calculateDocumentSimilarity(index_file, doc_id1, doc_id2);
+}
+
+else if (strcmp(command, "similarity-indexed") == 0) {
+    if (argc < 5) {
+        fprintf(stderr, "Error: Faltan argumentos para similitud indexada\n");
+        printIndexUsage(argv[0]);
+        return EXIT_FAILURE;
+    }
+    
+    const char* index_file = argv[3];
+    const char* target_doc_id = argv[4];
+    int top_k = (argc >= 6) ? atoi(argv[5]) : 5;
+    
+    return findSimilarDocuments(index_file, target_doc_id, top_k);
+} else {
         fprintf(stderr, "Comando de índice no reconocido: %s\n", command);
         printIndexUsage(argv[0]);
         return EXIT_FAILURE;
     }
+}
+
+int calculateDocumentSimilarity(const char* index_file, const char* doc_id1, const char* doc_id2) {
+    // Cargar índice
+    InvertedIndex* index = NULL;
+    DocumentCollection* collection = NULL;
+    char* full_index_path = buildIndexPath(index_file);
+    if (!full_index_path) return EXIT_FAILURE;
+    
+    if (loadIndexFromBinary(&index, &collection, full_index_path) != 0) {
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Buscar documentos
+    uint32_t id1 = atoi(doc_id1);
+    uint32_t id2 = atoi(doc_id2);
+    DocumentInfo* doc1 = getDocumentById(collection, id1);
+    DocumentInfo* doc2 = getDocumentById(collection, id2);
+    
+    if (!doc1 || !doc2) {
+        fprintf(stderr, "Documento(s) no encontrado(s)\n");
+        destroyIndex(index);
+        destroyDocumentCollection(collection);
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Cargar contenidos
+    char* content1 = loadFile(doc1->filename);
+    char* content2 = loadFile(doc2->filename);
+    
+    if (!content1 || !content2) {
+        free(content1);
+        free(content2);
+        destroyIndex(index);
+        destroyDocumentCollection(collection);
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Calcular similitudes
+    double jaccard = jaccard_similarity(content1, content2);
+    double cosine = cosine_similarity(content1, content2);
+    
+    printf("\n=== Análisis de Similitud ===\n");
+    printf("Documento 1: %s (%s)\n", doc1->filename, doc1->title);
+    printf("Documento 2: %s (%s)\n", doc2->filename, doc2->title);
+    printf("Jaccard: %.4f\n", jaccard);
+    printf("Coseno:  %.4f\n", cosine);
+    
+    // Liberar recursos
+    free(content1);
+    free(content2);
+    destroyIndex(index);
+    destroyDocumentCollection(collection);
+    free(full_index_path);
+    return EXIT_SUCCESS;
+}
+
+// Función para encontrar documentos similares
+int findSimilarDocuments(const char* index_file, const char* target_doc_id, int top_k) {
+    // Cargar índice
+    InvertedIndex* index = NULL;
+    DocumentCollection* collection = NULL;
+    char* full_index_path = buildIndexPath(index_file);
+    if (!full_index_path) return EXIT_FAILURE;
+    
+    if (loadIndexFromBinary(&index, &collection, full_index_path) != 0) {
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Buscar documento objetivo
+    uint32_t target_id = atoi(target_doc_id);
+    DocumentInfo* target_doc = getDocumentById(collection, target_id);
+    
+    if (!target_doc) {
+        fprintf(stderr, "Documento objetivo no encontrado\n");
+        destroyIndex(index);
+        destroyDocumentCollection(collection);
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Cargar contenido objetivo
+    char* target_content = loadFile(target_doc->filename);
+    if (!target_content) {
+        destroyIndex(index);
+        destroyDocumentCollection(collection);
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    printf("\nBuscando documentos similares a: %s (%s)\n", 
+           target_doc->filename, target_doc->title);
+    
+    // Crear array de resultados
+    SimilarityResult* results = calloc(collection->count, sizeof(SimilarityResult));
+    if (!results) {
+        free(target_content);
+        destroyIndex(index);
+        destroyDocumentCollection(collection);
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    size_t valid_results = 0;
+    
+    // Calcular similitud con cada documento
+    for (size_t i = 0; i < collection->count; i++) {
+        if (collection->docs[i].doc_id == target_id) continue;
+        
+        char* content = loadFile(collection->docs[i].filename);
+        if (!content) continue;
+        
+        results[valid_results].doc_id = collection->docs[i].doc_id;
+        results[valid_results].filename = collection->docs[i].filename;
+        results[valid_results].similarity = cosine_similarity(target_content, content);
+        valid_results++;
+        
+        free(content);
+    }
+    
+    // Ordenar resultados por similitud
+    qsort(results, valid_results, sizeof(SimilarityResult), compare_similarity);
+    
+    // Determinar cantidad a mostrar
+    size_t display_count = (size_t)top_k;
+    if (valid_results < display_count) {
+        display_count = valid_results;
+    }
+    
+    // Mostrar top K resultados
+    printf("\nTop %d documentos similares:\n", top_k);
+    for (size_t i = 0; i < display_count; i++) {
+        DocumentInfo* doc = getDocumentById(collection, results[i].doc_id);
+        if (doc) {
+            printf("%zu. [ID: %u] %s (%.4f)\n", 
+                   i+1, results[i].doc_id, doc->filename, results[i].similarity);
+        }
+    }
+    
+    // Liberar recursos
+    free(results);
+    free(target_content);
+    destroyIndex(index);
+    destroyDocumentCollection(collection);
+    free(full_index_path);
+    return EXIT_SUCCESS;
+}
+
+int compare_similarity(const void* a, const void* b) {
+    const SimilarityResult* simA = (const SimilarityResult*)a;
+    const SimilarityResult* simB = (const SimilarityResult*)b;
+    
+    if (simA->similarity > simB->similarity) return -1;
+    if (simA->similarity < simB->similarity) return 1;
+    return 0;
 }

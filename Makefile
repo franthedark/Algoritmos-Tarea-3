@@ -15,6 +15,7 @@ SRCS = src/main.c \
        src/index_operations.c \
 	   src/cli.c \
 	   src/normalization.c \
+	   src/similarity.c
 
 OBJS = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SRCS))
 
@@ -30,7 +31,7 @@ $(OBJDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC_DIRS) -c $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INC_DIRS) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) $(INC_DIRS) -o $@ $(OBJS) -lm
 
 clean:
 	rm -rf build obj indexes backups results
@@ -151,6 +152,54 @@ backup-index: $(TARGET)
 	./$(TARGET) index backup "$$INDEX_FILE" "$$BACKUP_DIR"
 
 # ============================================================================
+# COMANDOS DE ANÁLISIS DE SIMILITUD
+# ============================================================================
+
+# Comparar dos archivos directamente
+similarity: $(TARGET)
+	@if [ -z "$(FILE1)" ] || [ -z "$(FILE2)" ]; then \
+		echo "Uso: make similarity FILE1=archivo1 FILE2=archivo2"; \
+		exit 1; \
+	fi
+	@# Buscar archivos en docs/ si no existen en ruta actual
+	@FILE1_PATH=; \
+	if [ -f "$(FILE1)" ]; then \
+		FILE1_PATH="$(FILE1)"; \
+	elif [ -f "docs/$(FILE1)" ]; then \
+		FILE1_PATH="docs/$(FILE1)"; \
+	else \
+		echo "Error: Archivo '$(FILE1)' no encontrado en directorio actual ni en docs/"; \
+		exit 1; \
+	fi; \
+	FILE2_PATH=; \
+	if [ -f "$(FILE2)" ]; then \
+		FILE2_PATH="$(FILE2)"; \
+	elif [ -f "docs/$(FILE2)" ]; then \
+		FILE2_PATH="docs/$(FILE2)"; \
+	else \
+		echo "Error: Archivo '$(FILE2)' no encontrado en directorio actual ni en docs/"; \
+		exit 1; \
+	fi; \
+	./$(TARGET) similarity "$$FILE1_PATH" "$$FILE2_PATH"
+
+# Comparar dos documentos en un índice (por ID)
+index-similarity: $(TARGET)
+	@if [ -z "$(INDEX)" ] || [ -z "$(DOC1)" ] || [ -z "$(DOC2)" ]; then \
+		echo "Uso: make index-similarity INDEX=index.idx DOC1=id1 DOC2=id2"; \
+		exit 1; \
+	fi
+	@./$(TARGET) index similarity "$(INDEX)" "$(DOC1)" "$(DOC2)"
+
+# Encontrar documentos similares en el índice
+index-similarity-indexed: $(TARGET)
+	@if [ -z "$(INDEX)" ] || [ -z "$(DOC)" ]; then \
+		echo "Uso: make index-similarity-indexed INDEX=index.idx DOC=id [TOP_K=5]"; \
+		exit 1; \
+	fi
+	@TOP_K=$${TOP_K:-5}; \
+	./$(TARGET) index similarity-indexed "$(INDEX)" "$(DOC)" "$$TOP_K"
+
+# ============================================================================
 # COMANDOS DE CONVENIENCIA
 # ============================================================================
 
@@ -256,6 +305,16 @@ help:
 	@echo "  make index-info [INDEX=archivo.idx]"
 	@echo "  make export-index OUTPUT=salida.txt [INDEX=archivo.idx]"
 	@echo "  make backup-index [INDEX=archivo.idx] [BACKUP_DIR=directorio]"
+	@echo ""
+	@echo "ANÁLISIS DE SIMILITUD:"
+	@echo "  make similarity FILE1=archivo1 FILE2=archivo2"
+	@echo "  make index-similarity INDEX=index.idx DOC1=id1 DOC2=id2"
+	@echo "  make index-similarity-indexed INDEX=index.idx DOC=id [TOP_K=5]"
+	@echo ""
+	@echo "EJEMPLOS:"
+	@echo "  make similarity FILE1=docs/alice.txt FILE2=docs/wonderland.txt"
+	@echo "  make index-similarity INDEX=index.idx DOC1=1 DOC2=5"
+	@echo "  make index-similarity-indexed INDEX=index.idx DOC=3 TOP_K=8"
 	@echo ""
 	@echo "UTILIDADES:"
 	@echo "  make demo-index   - Crear índice de demostración"
