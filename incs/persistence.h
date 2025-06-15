@@ -44,25 +44,16 @@ int saveIndexToBinary(const InvertedIndex *index, const DocumentCollection *coll
 int loadIndexFromBinary(InvertedIndex **index, DocumentCollection **collection, 
                         const char *filename);
 
-int saveIndexToJSON(const InvertedIndex *index, const DocumentCollection *collection, 
-                    const char *filename);
-int loadIndexFromJSON(InvertedIndex **index, DocumentCollection **collection, 
-                      const char *filename);
-
 // Funciones auxiliares
-uint64_t calculateChecksum(const void *data, size_t size);
 int validateIndexFile(const char *filename);
 void printIndexFileInfo(const char *filename);
 
 // Funciones de backup y recuperación
 int createIndexBackup(const InvertedIndex *index, const DocumentCollection *collection, 
                       const char *backup_dir);
-int restoreIndexFromBackup(InvertedIndex **index, DocumentCollection **collection, 
-                           const char *backup_file);
 
 // Funciones de exportación
 int exportIndexToText(const InvertedIndex *index, const DocumentCollection *collection, 
                       const char *filename);
-int exportTermStatistics(const InvertedIndex *index, const char *filename);
 
-#endif // PERSISTENCE_H
+#endif 

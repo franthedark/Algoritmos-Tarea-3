@@ -305,51 +305,6 @@ void unicode_normalize_full(char* str, int remove_diacritics_flag) {
     squeezeSpaces(str);
 }
 
-// Funciones originales mantenidas para compatibilidad
-void buildNormalizationTable(unsigned char table[256]) {
-    const char* from = "ÁÀÂÄáàâäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖóòôöÚÙÛÜúùûüÑñÇç";
-    const char* to   = "AAAAaaaaEEEEeeeeIIIIiiiiOOOOooooUUUUuuuuNnCc";
-    
-    for (int i = 0; i < 256; i++) {
-        table[i] = i;
-    }
-    
-    for (int c = 'A'; c <= 'Z'; c++) {
-        table[c] = c - 'A' + 'a';
-    }
-    
-    for (size_t i = 0; from[i] != '\0'; i++) {
-        table[(unsigned char)from[i]] = to[i];
-    }
-}
-
-void normalizeString(char* str) {
-    static unsigned char table[256];
-    static int initialized = 0;
-    
-    if (!initialized) {
-        for (int i = 0; i < 256; i++) {
-            table[i] = i;
-        }
-        
-        for (int c = 'A'; c <= 'Z'; c++) {
-            table[c] = c - 'A' + 'a';
-        }
-        
-        const char* from = "ÁÀÂÄÃáàâäãÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖÕóòôöõÚÙÛÜúùûüÑñÇç";
-        const char* to   = "AAAAAaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuNnCc";
-        
-        for (size_t i = 0; from[i] != '\0'; i++) {
-            table[(unsigned char)from[i]] = to[i];
-        }
-        initialized = 1;
-    }
-    
-    for (size_t i = 0; str[i]; i++) {
-        str[i] = (char)table[(unsigned char)str[i]];
-    }
-}
-
 char* loadFile(const char* filename) {
     FILE* fp = fopen(filename, "rb");
     if (!fp) {

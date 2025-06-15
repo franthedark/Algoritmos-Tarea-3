@@ -63,11 +63,8 @@ void addTermToIndex(InvertedIndex *index, const char *term, uint32_t doc_id, siz
 
 // Búsqueda
 PostingNode* searchTerm(InvertedIndex *index, const char *term);
-void printSearchResults(InvertedIndex *index, DocumentCollection *collection, 
-                       const char *term);
 
 // Utilidades
-void printIndexStats(InvertedIndex *index, DocumentCollection *collection);
 uint32_t hash_function(const char *str, size_t table_size);
 
 // Gestión de documentos
@@ -75,4 +72,4 @@ DocumentCollection* createDocumentCollection(size_t initial_capacity);
 void destroyDocumentCollection(DocumentCollection *collection);
 DocumentInfo* getDocumentById(DocumentCollection *collection, uint32_t doc_id);
 
-#endif // INDEXER_H
+#endif

@@ -420,32 +420,30 @@ int handleIndexCommands(int argc, char* argv[]) {
         return (result == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
         
     } else if (strcmp(command, "similarity") == 0) {
-    if (argc < 6) {
-        fprintf(stderr, "Error: Faltan argumentos para similitud\n");
-        printIndexUsage(argv[0]);
-        return EXIT_FAILURE;
-    }
+        if (argc < 6) {
+            fprintf(stderr, "Error: Faltan argumentos para similitud\n");
+            printIndexUsage(argv[0]);
+            return EXIT_FAILURE;
+        }
     
-    const char* index_file = argv[3];
-    const char* doc_id1 = argv[4];
-    const char* doc_id2 = argv[5];
+        const char* index_file = argv[3];
+        const char* doc_id1 = argv[4];
+        const char* doc_id2 = argv[5];
     
-    return calculateDocumentSimilarity(index_file, doc_id1, doc_id2);
-}
-
-else if (strcmp(command, "similarity-indexed") == 0) {
-    if (argc < 5) {
-        fprintf(stderr, "Error: Faltan argumentos para similitud indexada\n");
-        printIndexUsage(argv[0]);
-        return EXIT_FAILURE;
-    }
+        return calculateDocumentSimilarity(index_file, doc_id1, doc_id2);
+    } else if (strcmp(command, "similarity-indexed") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "Error: Faltan argumentos para similitud indexada\n");
+            printIndexUsage(argv[0]);
+            return EXIT_FAILURE;
+        }
     
-    const char* index_file = argv[3];
-    const char* target_doc_id = argv[4];
-    int top_k = (argc >= 6) ? atoi(argv[5]) : 5;
+        const char* index_file = argv[3];
+        const char* target_doc_id = argv[4];
+        int top_k = (argc >= 6) ? atoi(argv[5]) : 5;
     
-    return findSimilarDocuments(index_file, target_doc_id, top_k);
-} else {
+        return findSimilarDocuments(index_file, target_doc_id, top_k);
+    } else {
         fprintf(stderr, "Comando de índice no reconocido: %s\n", command);
         printIndexUsage(argv[0]);
         return EXIT_FAILURE;

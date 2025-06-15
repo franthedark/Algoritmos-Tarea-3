@@ -3,8 +3,8 @@
 #include "utils.h"
 #include <math.h>
 #include <string.h>
-#include <stdlib.h> // Para malloc, free
-#include <stdint.h> // Para uint32_t
+#include <stdlib.h> 
+#include <stdint.h>
 
 double jaccard_similarity(const char *doc1, const char *doc2) {
     size_t count1, count2;

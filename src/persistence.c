@@ -7,15 +7,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-// Calcular checksum simple
-uint64_t calculateChecksum(const void *data, size_t size) {
-    const unsigned char *bytes = (const unsigned char*)data;
-    uint64_t checksum = 0;
-    for (size_t i = 0; i < size; i++) {
-        checksum = checksum * 31 + bytes[i];
-    }
-    return checksum;
-}
 
 // Guardar índice en formato binario
 int saveIndexToBinary(const InvertedIndex *index, const DocumentCollection *collection, 
@@ -261,100 +252,6 @@ error_cleanup:
     return -1;
 }
 
-// Guardar índice en formato JSON (versión simple sin libcJSON)
-int saveIndexToJSON(const InvertedIndex *index, const DocumentCollection *collection,
-                    const char *filename) {
-    if (!index || !collection || !filename) return -1;
-    
-    FILE *file = fopen(filename, "w");
-    if (!file) {
-        perror("saveIndexToJSON: Error al abrir archivo");
-        return -1;
-    }
-    
-    // Header
-    fprintf(file, "{\n");
-    fprintf(file, "  \"header\": {\n");
-    fprintf(file, "    \"version\": %d,\n", INDEX_FILE_VERSION);
-    fprintf(file, "    \"num_terms\": %zu,\n", index->size);
-    fprintf(file, "    \"num_documents\": %zu,\n", collection->count);
-    fprintf(file, "    \"next_doc_id\": %u,\n", index->next_doc_id);
-    fprintf(file, "    \"timestamp\": %ld\n", (long)time(NULL));
-    fprintf(file, "  },\n");
-    
-    // Documentos
-    fprintf(file, "  \"documents\": [\n");
-    for (size_t i = 0; i < collection->count; i++) {
-        fprintf(file, "    {\n");
-        fprintf(file, "      \"doc_id\": %u,\n", collection->docs[i].doc_id);
-        fprintf(file, "      \"filename\": \"%s\",\n", collection->docs[i].filename);
-        if (collection->docs[i].title) {
-            fprintf(file, "      \"title\": \"%s\",\n", collection->docs[i].title);
-        }
-        fprintf(file, "      \"word_count\": %zu\n", collection->docs[i].word_count);
-        fprintf(file, "    }%s\n", (i < collection->count - 1) ? "," : "");
-    }
-    fprintf(file, "  ],\n");
-    
-    // Términos
-    fprintf(file, "  \"terms\": [\n");
-    int first_term = 1;
-    for (size_t i = 0; i < index->capacity; i++) {
-        if (index->entries[i].term) {
-            if (!first_term) fprintf(file, ",\n");
-            first_term = 0;
-            
-            fprintf(file, "    {\n");
-            fprintf(file, "      \"term\": \"%s\",\n", index->entries[i].term);
-            fprintf(file, "      \"doc_frequency\": %u,\n", index->entries[i].doc_frequency);
-            fprintf(file, "      \"postings\": [\n");
-            
-            PostingNode *current = index->entries[i].head;
-            int first_posting = 1;
-            while (current) {
-                if (!first_posting) fprintf(file, ",\n");
-                first_posting = 0;
-                
-                fprintf(file, "        {\n");
-                fprintf(file, "          \"doc_id\": %u,\n", current->posting.doc_id);
-                fprintf(file, "          \"positions\": [");
-                
-                for (size_t j = 0; j < current->posting.position_count; j++) {
-                    fprintf(file, "%zu", current->posting.positions[j]);
-                    if (j < current->posting.position_count - 1) fprintf(file, ", ");
-                }
-                
-                fprintf(file, "]\n");
-                fprintf(file, "        }");
-                
-                current = current->next;
-            }
-            
-            fprintf(file, "\n      ]\n");
-            fprintf(file, "    }");
-        }
-    }
-    fprintf(file, "\n  ]\n");
-    fprintf(file, "}\n");
-    
-    fclose(file);
-    printf("Índice guardado en formato JSON: %s\n", filename);
-    return 0;
-}
-
-// Cargar índice desde formato JSON (versión simple - solo lectura básica)
-int loadIndexFromJSON(InvertedIndex **index, DocumentCollection **collection,
-                      const char *filename) {
-    if (!index || !collection || !filename) return -1;
-    
-    printf("NOTA: La carga desde JSON requiere implementación de parser JSON completo.\n");
-    printf("Por ahora, use el formato binario para guardar y cargar índices.\n");
-    printf("Para implementar JSON completo, instale libcJSON:\n");
-    printf("  sudo apt-get install libcjson-dev  (Ubuntu/Debian)\n");
-    printf("  sudo yum install cjson-devel       (CentOS/RHEL)\n");
-    
-    return -1;
-}
 
 // Validar archivo de índice
 int validateIndexFile(const char *filename) {
@@ -460,15 +357,6 @@ int createIndexBackup(const InvertedIndex *index, const DocumentCollection *coll
     return result;
 }
 
-// Restaurar índice desde backup
-int restoreIndexFromBackup(InvertedIndex **index, DocumentCollection **collection,
-                           const char *backup_file) {
-    if (!index || !collection || !backup_file) return -1;
-    
-    printf("Restaurando índice desde backup: %s\n", backup_file);
-    return loadIndexFromBinary(index, collection, backup_file);
-}
-
 // Exportar índice a formato texto
 int exportIndexToText(const InvertedIndex *index, const DocumentCollection *collection,
                       const char *filename) {
@@ -514,39 +402,5 @@ int exportIndexToText(const InvertedIndex *index, const DocumentCollection *coll
     
     fclose(file);
     printf("Índice exportado a texto: %s\n", filename);
-    return 0;
-}
-
-// Exportar estadísticas de términos
-int exportTermStatistics(const InvertedIndex *index, const char *filename) {
-    if (!index || !filename) return -1;
-    
-    FILE *file = fopen(filename, "w");
-    if (!file) {
-        perror("exportTermStatistics: Error al abrir archivo");
-        return -1;
-    }
-    
-    fprintf(file, "Término,Frecuencia_Documento,Total_Ocurrencias\n");
-    
-    for (size_t i = 0; i < index->capacity; i++) {
-        if (index->entries[i].term) {
-            size_t total_occurrences = 0;
-            PostingNode *current = index->entries[i].head;
-            
-            while (current) {
-                total_occurrences += current->posting.position_count;
-                current = current->next;
-            }
-            
-            fprintf(file, "%s,%u,%zu\n", 
-                    index->entries[i].term, 
-                    index->entries[i].doc_frequency, 
-                    total_occurrences);
-        }
-    }
-    
-    fclose(file);
-    printf("Estadísticas de términos exportadas: %s\n", filename);
     return 0;
 }

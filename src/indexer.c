@@ -297,85 +297,6 @@ PostingNode* searchTerm(InvertedIndex *index, const char *term) {
     return NULL;
 }
 
-// Imprimir resultados de búsqueda
-void printSearchResults(InvertedIndex *index, DocumentCollection *collection, 
-                       const char *term) {
-    PostingNode *results = searchTerm(index, term);
-    
-    if (!results) {
-        printf("No se encontraron resultados para '%s'\n", term);
-        return;
-    }
-    
-    printf("Resultados para '%s':\n", term);
-    printf("=====================================\n");
-    
-    PostingNode *current = results;
-    while (current) {
-        DocumentInfo *doc = getDocumentById(collection, current->posting.doc_id);
-        if (doc) {
-            printf("Documento: %s", doc->filename);
-            if (doc->title) printf(" (%s)", doc->title);
-            printf("\n");
-            printf("  ID: %u | Frecuencia: %zu | Posiciones: ", 
-                   current->posting.doc_id, current->posting.position_count);
-            
-            for (size_t i = 0; i < current->posting.position_count && i < 10; i++) {
-                printf("%zu", current->posting.positions[i]);
-                if (i < current->posting.position_count - 1 && i < 9) printf(", ");
-            }
-            if (current->posting.position_count > 10) {
-                printf("... (+%zu más)", current->posting.position_count - 10);
-            }
-            printf("\n\n");
-        }
-        current = current->next;
-    }
-}
-
-// Imprimir estadísticas del índice
-void printIndexStats(InvertedIndex *index, DocumentCollection *collection) {
-    if (!index || !collection) return;
-    
-    printf("Estadísticas del Índice Invertido\n");
-    printf("==================================\n");
-    printf("Términos únicos: %zu\n", index->size);
-    printf("Capacidad tabla hash: %zu (%.1f%% ocupación)\n", 
-           index->capacity, (double)index->size / index->capacity * 100);
-    printf("Documentos indexados: %zu\n", collection->count);
-    printf("Próximo ID documento: %u\n", index->next_doc_id);
-    
-    // Calcular estadísticas adicionales
-    size_t total_postings = 0;
-    size_t total_positions = 0;
-    
-    for (size_t i = 0; i < index->capacity; i++) {
-        if (index->entries[i].term) {
-            PostingNode *current = index->entries[i].head;
-            while (current) {
-                total_postings++;
-                total_positions += current->posting.position_count;
-                current = current->next;
-            }
-        }
-    }
-    
-    printf("Total de postings: %zu\n", total_postings);
-    printf("Total de posiciones: %zu\n", total_positions);
-    
-    if (collection->count > 0) {
-        printf("\nDocumentos:\n");
-        for (size_t i = 0; i < collection->count; i++) {
-            printf("  [%u] %s", collection->docs[i].doc_id, collection->docs[i].filename);
-            if (collection->docs[i].title) {
-                printf(" - %s", collection->docs[i].title);
-            }
-            printf(" (%zu palabras)\n", collection->docs[i].word_count);
-        }
-    }
-}
-
-// Crear colección de documentos
 DocumentCollection* createDocumentCollection(size_t initial_capacity) {
     if (initial_capacity == 0) initial_capacity = 64;
     
@@ -394,7 +315,6 @@ DocumentCollection* createDocumentCollection(size_t initial_capacity) {
     return collection;
 }
 
-// Destruir colección de documentos
 void destroyDocumentCollection(DocumentCollection *collection) {
     if (!collection) return;
     
@@ -407,7 +327,6 @@ void destroyDocumentCollection(DocumentCollection *collection) {
     free(collection);
 }
 
-// Obtener documento por ID
 DocumentInfo* getDocumentById(DocumentCollection *collection, uint32_t doc_id) {
     if (!collection) return NULL;
     
