@@ -110,10 +110,6 @@ int main(int argc, char* argv[]) {
     } else {
         text = raw;
     }
-
-    // ======================================================================
-    // NUEVO: ANALIZAR Y APLICAR NORMALIZACIÓN (REEMPLAZA EL PREPROCESAMIENTO)
-    // ======================================================================
     
     // Analizar opciones de normalización (--nfc, --no-diacritics, etc.)
     NormalizationOptions norm_opts = parseNormalizationOptions(argc, argv);
