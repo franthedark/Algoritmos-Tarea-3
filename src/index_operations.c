@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +59,28 @@ char* buildIndexPath(const char* index_file) {
     return full_path;
 }
 
+// Función para construir ruta completa de documentos
+char* buildDocsPath(const char* input_path) {
+    const char* docs_dir = "docs";
+    
+    // Si la ruta ya incluye '/' o es absoluta, usarla tal cual
+    if (strchr(input_path, '/') != NULL || strchr(input_path, '\\') != NULL) {
+        char* full_path = malloc(strlen(input_path) + 1);
+        if (full_path) strcpy(full_path, input_path);
+        return full_path;
+    }
+    
+    // Construir ruta completa: docs/archivo
+    size_t path_len = strlen(docs_dir) + strlen(input_path) + 2;
+    char* full_path = malloc(path_len);
+    
+    if (full_path) {
+        snprintf(full_path, path_len, "%s/%s", docs_dir, input_path);
+    }
+    
+    return full_path;
+}
+
 void printIndexUsage(const char* program_name) {
     fprintf(stderr,
         "Gestión de índices y análisis de similitud:\n"
@@ -99,12 +122,14 @@ int isTextFile(const char* filename) {
 int indexDirectory(const char* dir_path, const char* index_file) {
     printf("Creando índice desde directorio: %s\n", dir_path);
     
-    // Construir ruta completa para el archivo de índice
+    // Construir ruta completa para el archivo de índice y documentación
     char* full_index_path = buildIndexPath(index_file);
-    if (!full_index_path) {
-        fprintf(stderr, "Error: No se pudo construir la ruta del índice\n");
+    char* full_dir_path = buildDocsPath(dir_path);
+    if (!full_index_path || !full_dir_path) {
+        fprintf(stderr, "Error: No se pudo construir las rutas necesarias.\n");
         return EXIT_FAILURE;
     }
+
     
     printf("Archivo de índice se guardará en: %s\n", full_index_path);
     
@@ -136,19 +161,16 @@ int indexDirectory(const char* dir_path, const char* index_file) {
             
             printf("Procesando: %s\n", filepath);
             
-            // Read file content first
             FILE* file = fopen(filepath, "r");
             if (!file) {
                 fprintf(stderr, "Advertencia: No se pudo abrir %s\n", filepath);
                 continue;
             }
             
-            // Get file size
             fseek(file, 0, SEEK_END);
             long file_size = ftell(file);
             fseek(file, 0, SEEK_SET);
             
-            // Read content
             char* content = malloc(file_size + 1);
             if (!content) {
                 fclose(file);
@@ -160,7 +182,6 @@ int indexDirectory(const char* dir_path, const char* index_file) {
             content[read_size] = '\0';
             fclose(file);
             
-            // Fix: addDocument needs 5 parameters (index, collection, filepath, content, title)
             uint32_t doc_id = addDocument(index, collection, filepath, content, entry->d_name);
             free(content);
             
@@ -199,6 +220,7 @@ int indexDirectory(const char* dir_path, const char* index_file) {
     
     printf("Índice creado exitosamente: %s\n", full_index_path);
     free(full_index_path);
+    free(full_dir_path);
     return EXIT_SUCCESS;
 }
 
@@ -288,7 +310,6 @@ int searchInIndex(const char* index_file, const char* term) {
     }
     
     free(normalized_term);
-    // Note: PostingNode is typically managed by the index, so we don't free it here
     destroyIndex(index);
     destroyDocumentCollection(collection);
     
@@ -443,6 +464,16 @@ int handleIndexCommands(int argc, char* argv[]) {
         int top_k = (argc >= 6) ? atoi(argv[5]) : 5;
     
         return findSimilarDocuments(index_file, target_doc_id, top_k);
+    } else if (strcmp(command, "update") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "Error: Faltan argumentos para actualización\n");
+            fprintf(stderr, "Uso: %s index update <archivo_indice.idx> <directorio_o_archivo>\n", argv[0]);
+            return EXIT_FAILURE;
+        }
+    
+        const char* index_file = argv[3];
+        const char* new_docs = argv[4];
+        return updateIndex(index_file, new_docs);
     } else {
         fprintf(stderr, "Comando de índice no reconocido: %s\n", command);
         printIndexUsage(argv[0]);

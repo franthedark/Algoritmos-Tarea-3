@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef NORMALIZATION_H
 #define NORMALIZATION_H
 

@@ -184,6 +184,9 @@ Este directorio contiene conjuntos de datos para pruebas:
 - `wikipedia-sample.txt`: Artículo aleatorio de Wikipedia
 - **Licencia**: Creative Commons Attribution-ShareAlike 3.0
 
+## 4. Samples de texto
+- Archivos de texto de relleno para evaluar tipografías y evaluar algoritmos en distintos largos de texto.
+
 > **Nota**: Estos archivos son para uso educativo y de pruebas.
 EOL
 

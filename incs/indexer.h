@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef INDEXER_H
 #define INDEXER_H
 
@@ -71,5 +72,9 @@ uint32_t hash_function(const char *str, size_t table_size);
 DocumentCollection* createDocumentCollection(size_t initial_capacity);
 void destroyDocumentCollection(DocumentCollection *collection);
 DocumentInfo* getDocumentById(DocumentCollection *collection, uint32_t doc_id);
+
+int updateIndex(const char* index_file, const char* new_docs);
+int processSingleFile(InvertedIndex* index, DocumentCollection* collection, const char* filepath);
+int isDirectory(const char* path);
 
 #endif

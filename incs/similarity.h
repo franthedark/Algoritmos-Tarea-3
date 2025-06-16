@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef SIMILARITY_H
 #define SIMILARITY_H
 

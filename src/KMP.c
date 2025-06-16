@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include "KMP.h"
 #include "cli.h"
 #include <stdio.h>

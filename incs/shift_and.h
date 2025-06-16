@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef SHIFT_AND_H
 #define SHIFT_AND_H
 

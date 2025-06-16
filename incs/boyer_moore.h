@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef BOYER_MOORE_H
 #define BOYER_MOORE_H
 

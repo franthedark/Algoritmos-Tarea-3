@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -168,7 +169,7 @@ static int apply_mapping_table(char* str, const UnicodeMapping* table) {
     return changes;
 }
 
-// 1. Case-folding Unicode avanzado
+// Case-folding Unicode avanzado
 void unicode_case_fold(char* str) {
     if (!str) return;
     
@@ -292,16 +293,10 @@ void remove_diacritics(char* str, int enable_removal) {
 void unicode_normalize_full(char* str, int remove_diacritics_flag) {
     if (!str) return;
     
-    // 1. Normalización canónica a NFC
     unicode_normalize(str, UNICODE_NFC);
-    
-    // 2. Case-folding Unicode
     unicode_case_fold(str);
-    
-    // 3. Eliminación de diacríticos (opcional)
     remove_diacritics(str, remove_diacritics_flag);
     
-    // 4. Limpieza de espacios (reutilizando función existente)
     squeezeSpaces(str);
 }
 

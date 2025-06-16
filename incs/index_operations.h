@@ -1,9 +1,11 @@
+// Diego Galindo, Francisco Mercado
 #ifndef INDEX_OPERATIONS_H
 #define INDEX_OPERATIONS_H
 // Este módulo contiene todas las funciones relacionadas con la gestión de índices: creación, búsqueda, información, exportación y backup.
 
 int createDirectoryIfNotExists(const char* dir_path);
 char* buildIndexPath(const char* index_file);
+char* buildDocsPath(const char* input_path);
 
 int findSimilarDocuments(const char* index_file, const char* target_doc_id, int top_k);
 int calculateDocumentSimilarity(const char* index_file, const char* doc_id1, const char* doc_id2);

@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include "similarity.h"
 #include "indexer.h"
 #include "utils.h"

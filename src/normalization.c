@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include <stdio.h>
 #include <string.h>
 #include "normalization.h"

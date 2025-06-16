@@ -1,3 +1,5 @@
+// Diego Galindo, Francisco Mercado
+
 #include "boyer_moore.h"
 #include "cli.h"
 #include "normalization.h"

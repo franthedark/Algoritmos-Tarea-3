@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #include "shift_and.h"
 #include "cli.h"
 #include <stdio.h>

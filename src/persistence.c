@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #define _GNU_SOURCE  // For strdup function
 #include "persistence.h"
 #include <stdio.h>
@@ -222,7 +223,6 @@ int loadIndexFromBinary(InvertedIndex **index, DocumentCollection **collection,
         
         // Agregar documento a la colección (asegurar que no exceda la capacidad)
         if ((*collection)->count < (*collection)->capacity) {
-            // Fixed: Use DocumentInfo instead of Document and proper initialization
             DocumentInfo doc;
             doc.doc_id = doc_header.doc_id;
             doc.filename = strdup(filename_str);

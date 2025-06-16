@@ -1,3 +1,4 @@
+// Diego Galindo, Francisco Mercado
 #ifndef KMP_H
 #define KMP_H
 

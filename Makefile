@@ -1,9 +1,14 @@
+# Diego Galindo y Francisco Mercado
+
 CC = gcc
 CFLAGS = -std=c11 -O2 -Wall -Wextra
 OBJDIR = obj
 BINDIR = build
 TARGET = $(BINDIR)/buscador
 INC_DIRS = -Iincs
+INDEX_DIR = indexes
+DOCS_DIR = docs
+
 
 SRCS = src/main.c \
        src/KMP.c \
@@ -82,8 +87,6 @@ run-%: $(TARGET)
 # COMANDOS DE GESTIÓN DE ÍNDICES
 # ============================================================================
 
-# Crear índice desde un directorio
-# Uso: make create-index DIR=docs [INDEX=nombre.idx]
 create-index: $(TARGET)
 	@if [ -z "$(DIR)" ]; then \
 		echo "Uso: make create-index DIR=directorio [INDEX=archivo.idx]"; \
@@ -99,57 +102,114 @@ create-index: $(TARGET)
 	./$(TARGET) index create "$(DIR)" "$$INDEX_FILE"
 
 # Buscar término en el índice
-# Uso: make search-index TERM="palabra" [INDEX=archivo.idx]
 search-index: $(TARGET)
 	@if [ -z "$(TERM)" ]; then \
 		echo "Uso: make search-index TERM=\"término\" [INDEX=archivo.idx]"; \
 		echo "Ejemplo: make search-index TERM=\"función\""; \
 		exit 1; \
 	fi
-	@INDEX_FILE=$${INDEX:-indexes/index.idx}; \
-	if [ ! -f "$$INDEX_FILE" ]; then \
-		echo "Error: Archivo de índice '$$INDEX_FILE' no encontrado"; \
+	@if [ -z "$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/index.idx"; \
+	elif [ -f "$(INDEX)" ]; then \
+		RESOLVED_INDEX="$(INDEX)"; \
+	elif [ -f "indexes/$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/$(INDEX)"; \
+	else \
+		RESOLVED_INDEX="$(INDEX)"; \
+	fi; \
+	if [ ! -f "$$RESOLVED_INDEX" ]; then \
+		echo "Error: Archivo de índice '$$RESOLVED_INDEX' no encontrado"; \
 		echo "Ejecuta primero: make create-index DIR=docs"; \
 		exit 1; \
 	fi; \
-	./$(TARGET) index search "$$INDEX_FILE" "$(TERM)"
+	./$(TARGET) index search "$$RESOLVED_INDEX" "$(TERM)"
 
 # Mostrar información del índice
-# Uso: make index-info [INDEX=archivo.idx]
 index-info: $(TARGET)
-	@INDEX_FILE=$${INDEX:-indexes/index.idx}; \
-	if [ ! -f "$$INDEX_FILE" ]; then \
-		echo "Error: Archivo de índice '$$INDEX_FILE' no encontrado"; \
+	@if [ -z "$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/index.idx"; \
+	elif [ -f "$(INDEX)" ]; then \
+		RESOLVED_INDEX="$(INDEX)"; \
+	elif [ -f "indexes/$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/$(INDEX)"; \
+	else \
+		RESOLVED_INDEX="$(INDEX)"; \
+	fi; \
+	if [ ! -f "$$RESOLVED_INDEX" ]; then \
+		echo "Error: Archivo de índice '$$RESOLVED_INDEX' no encontrado"; \
 		echo "Ejecuta primero: make create-index DIR=docs"; \
 		exit 1; \
 	fi; \
-	./$(TARGET) index info "$$INDEX_FILE"
+	./$(TARGET) index info "$$RESOLVED_INDEX"
 
 # Exportar índice a texto
-# Uso: make export-index OUTPUT=archivo.txt [INDEX=archivo.idx]
 export-index: $(TARGET)
 	@if [ -z "$(OUTPUT)" ]; then \
 		echo "Uso: make export-index OUTPUT=archivo.txt [INDEX=archivo.idx]"; \
 		echo "Ejemplo: make export-index OUTPUT=indice_exportado.txt"; \
 		exit 1; \
 	fi
-	@INDEX_FILE=$${INDEX:-indexes/index.idx}; \
-	if [ ! -f "$$INDEX_FILE" ]; then \
-		echo "Error: Archivo de índice '$$INDEX_FILE' no encontrado"; \
+	@if [ -z "$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/index.idx"; \
+	elif [ -f "$(INDEX)" ]; then \
+		RESOLVED_INDEX="$(INDEX)"; \
+	elif [ -f "indexes/$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/$(INDEX)"; \
+	else \
+		RESOLVED_INDEX="$(INDEX)"; \
+	fi; \
+	if [ ! -f "$$RESOLVED_INDEX" ]; then \
+		echo "Error: Archivo de índice '$$RESOLVED_INDEX' no encontrado"; \
 		exit 1; \
 	fi; \
-	./$(TARGET) index export "$$INDEX_FILE" "$(OUTPUT)"
+	./$(TARGET) index export "$$RESOLVED_INDEX" "$(OUTPUT)"
 
 # Crear backup del índice
-# Uso: make backup-index [INDEX=archivo.idx] [BACKUP_DIR=directorio]
 backup-index: $(TARGET)
-	@INDEX_FILE=$${INDEX:-indexes/index.idx}; \
+	@if [ -z "$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/index.idx"; \
+	elif [ -f "$(INDEX)" ]; then \
+		RESOLVED_INDEX="$(INDEX)"; \
+	elif [ -f "indexes/$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/$(INDEX)"; \
+	else \
+		RESOLVED_INDEX="$(INDEX)"; \
+	fi; \
 	BACKUP_DIR=$${BACKUP_DIR:-backups}; \
-	if [ ! -f "$$INDEX_FILE" ]; then \
-		echo "Error: Archivo de índice '$$INDEX_FILE' no encontrado"; \
+	if [ ! -f "$$RESOLVED_INDEX" ]; then \
+		echo "Error: Archivo de índice '$$RESOLVED_INDEX' no encontrado"; \
 		exit 1; \
 	fi; \
-	./$(TARGET) index backup "$$INDEX_FILE" "$$BACKUP_DIR"
+	./$(TARGET) index backup "$$RESOLVED_INDEX" "$$BACKUP_DIR"
+
+# Actualizar índice agregando nuevos documentos
+update-index: $(TARGET)
+	@if [ -z "$(NEW_DOCS)" ]; then \
+		echo "Uso: make update-index NEW_DOCS=doc_o_dir INDEX=archivo.idx"; \
+		echo "Ejemplo 1 (archivo): make update-index NEW_DOCS=nuevo.txt INDEX=index.idx"; \
+		echo "Ejemplo 2 (directorio): make update-index NEW_DOCS=nuevos_docs/ INDEX=index.idx"; \
+		exit 1; \
+	fi; \
+	# Resolver ruta de documentos; \
+	if [ -d "$(NEW_DOCS)" ] || [ -f "$(NEW_DOCS)" ]; then \
+		RESOLVED_NEW_DOCS="$(NEW_DOCS)"; \
+	elif [ -d "docs/$(NEW_DOCS)" ] || [ -f "docs/$(NEW_DOCS)" ]; then \
+		RESOLVED_NEW_DOCS="docs/$(NEW_DOCS)"; \
+	else \
+		echo "Error: No se encontró '$(NEW_DOCS)' ni en el directorio actual ni en docs/"; \
+		exit 1; \
+	fi; \
+	# Resolver ruta del índice; \
+	if [ -z "$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/index.idx"; \
+	elif [ -f "$(INDEX)" ]; then \
+		RESOLVED_INDEX="$(INDEX)"; \
+	elif [ -f "indexes/$(INDEX)" ]; then \
+		RESOLVED_INDEX="indexes/$(INDEX)"; \
+	else \
+		RESOLVED_INDEX="$(INDEX)"; \
+	fi; \
+	./$(TARGET) index update "$$RESOLVED_INDEX" "$$RESOLVED_NEW_DOCS"
 
 # ============================================================================
 # COMANDOS DE ANÁLISIS DE SIMILITUD
@@ -193,7 +253,7 @@ index-similarity: $(TARGET)
 # Encontrar documentos similares en el índice
 index-similarity-indexed: $(TARGET)
 	@if [ -z "$(INDEX)" ] || [ -z "$(DOC)" ]; then \
-		echo "Uso: make index-similarity-indexed INDEX=index.idx DOC=id [TOP_K=5]"; \
+		echo "Uso: make index-similarity-indexed INDEX=index.idx DOC=id TOP_K=5"; \
 		exit 1; \
 	fi
 	@TOP_K=$${TOP_K:-5}; \
@@ -300,16 +360,17 @@ help:
 	@echo "  make run-kmp PAT=\"Además\" FILE=doc.html OPTS=no-diacritics"
 	@echo ""
 	@echo "GESTIÓN DE ÍNDICES:"
-	@echo "  make create-index DIR=docs [INDEX=nombre.idx]"
-	@echo "  make search-index TERM=\"palabra\" [INDEX=archivo.idx]"
-	@echo "  make index-info [INDEX=archivo.idx]"
-	@echo "  make export-index OUTPUT=salida.txt [INDEX=archivo.idx]"
-	@echo "  make backup-index [INDEX=archivo.idx] [BACKUP_DIR=directorio]"
+	@echo "  make create-index DIR=docs INDEX=nombre.idx"
+	@echo "  make search-index TERM=\"palabra\" INDEX=archivo.idx"
+	@echo "  make index-info INDEX=archivo.idx"
+	@echo "  make export-index OUTPUT=salida.txt INDEX=archivo.idx"
+	@echo "  make backup-index INDEX=archivo.idx"
+	@echo "  make update-index NEW_DOCS=doc_o_dir INDEX=archivo.idx"
 	@echo ""
 	@echo "ANÁLISIS DE SIMILITUD:"
 	@echo "  make similarity FILE1=archivo1 FILE2=archivo2"
 	@echo "  make index-similarity INDEX=index.idx DOC1=id1 DOC2=id2"
-	@echo "  make index-similarity-indexed INDEX=index.idx DOC=id [TOP_K=5]"
+	@echo "  make index-similarity-indexed INDEX=index.idx DOC=id TOP_K=5"
 	@echo ""
 	@echo "EJEMPLOS:"
 	@echo "  make similarity FILE1=docs/alice.txt FILE2=docs/wonderland.txt"
@@ -330,4 +391,4 @@ help:
 	@echo "  make graph        - Graficar resultados del benchmark"
 	@echo ""
 
-.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help fetch-corpus clean-corpus benchmark graph
+.PHONY: all clean clean-all setup run run-% create-index search-index index-info export-index backup-index demo-index search-demo list-indexes list-backups help fetch-corpus clean-corpus benchmark graph update-index index-similarity index-similarity-indexed similarity

@@ -1,9 +1,21 @@
+// Diego Galindo, Francisco Mercado
 #include "indexer.h"
+#include "index_operations.h"
+#include "persistence.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#ifndef DT_REG
+#define DT_REG 8
+#endif
 
 // Función hash simple para strings
 uint32_t hash_function(const char *str, size_t table_size) {
@@ -337,4 +349,136 @@ DocumentInfo* getDocumentById(DocumentCollection *collection, uint32_t doc_id) {
     }
     
     return NULL;
+}
+
+// Función para determinar si una ruta es directorio
+int isDirectory(const char* path) {
+    struct stat statbuf;
+    if (stat(path, &statbuf) != 0) return 0;
+    return S_ISDIR(statbuf.st_mode);
+}
+
+// Actualizar índice con nuevos documentos
+int updateIndex(const char* index_file, const char* new_docs) {
+    // Construir ruta completa
+    char* full_index_path = buildIndexPath(index_file);
+    char* full_docs_path = buildDocsPath(new_docs);
+    if (!full_index_path || !full_docs_path) {
+        fprintf(stderr, "Error construyendo rutas necesarias.\n");
+        return EXIT_FAILURE;
+    }
+    
+    // Cargar índice existente
+    InvertedIndex* index = NULL;
+    DocumentCollection* collection = NULL;
+    if (loadIndexFromBinary(&index, &collection, full_index_path) != 0) {
+        fprintf(stderr, "Error cargando índice existente\n");
+        free(full_index_path);
+        return EXIT_FAILURE;
+    }
+    
+    // Procesar nuevos documentos
+    int files_added = 0;
+    
+    if (isDirectory(new_docs)) {
+        // Procesar directorio completo
+        DIR* dir = opendir(new_docs);
+        if (!dir) {
+            perror("Error abriendo directorio");
+            free(full_index_path);
+            destroyIndex(index);
+            destroyDocumentCollection(collection);
+            return EXIT_FAILURE;
+        }
+        
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_REG && isTextFile(entry->d_name)) {
+                char filepath[1024];
+                snprintf(filepath, sizeof(filepath), "%s/%s", new_docs, entry->d_name);
+                
+                // Procesar archivo individual
+                if (processSingleFile(index, collection, filepath)) {
+                    files_added++;
+                }
+            }
+        }
+        closedir(dir);
+    } else {
+        // Procesar archivo individual
+        files_added = processSingleFile(index, collection, new_docs) ? 1 : 0;
+    }
+    
+    // Guardar índice actualizado
+    if (files_added > 0) {
+        if (saveIndexToBinary(index, collection, full_index_path) != 0) {
+            fprintf(stderr, "Error guardando índice actualizado\n");
+        } else {
+            printf("Índice actualizado. Archivos añadidos: %d\n", files_added);
+        }
+    }
+    
+    // Limpieza
+    destroyIndex(index);
+    destroyDocumentCollection(collection);
+    free(full_index_path);
+    free(full_docs_path);
+    return EXIT_SUCCESS;
+}
+
+// Función auxiliar para procesar un archivo
+int processSingleFile(InvertedIndex* index, DocumentCollection* collection, const char* filepath) {
+    FILE* file = fopen(filepath, "r");
+    if (!file) {
+        fprintf(stderr, "Advertencia: No se pudo abrir %s\n", filepath);
+        return 0;
+    }
+    
+    // Verificar si el archivo existe
+    if (access(filepath, F_OK) == -1) {
+        // Intentar con docs/
+        char* docs_path = buildDocsPath(filepath);
+        if (access(docs_path, F_OK) != -1) {
+            filepath = docs_path;  // Usar la ruta en docs/
+        } else {
+            fprintf(stderr, "Archivo no encontrado: %s\n", filepath);
+            free(docs_path);
+            return 0;
+        }
+        free(docs_path);
+    }
+
+    // Leer contenido
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    char* content = malloc(file_size + 1);
+    if (!content) {
+        fclose(file);
+        return 0;
+    }
+    
+    size_t bytes_read = fread(content, 1, file_size, file);
+    content[bytes_read] = '\0';
+    
+    // Conversión explícita de tipos
+    if (bytes_read != (size_t)file_size) {
+        fprintf(stderr, "Advertencia: Lectura incompleta en %s (%zu/%ld bytes)\n", 
+                filepath, bytes_read, file_size);
+    }
+    
+    fclose(file);
+    
+    // Obtener nombre base del archivo
+    const char* filename = strrchr(filepath, '/');
+    if (!filename) filename = strrchr(filepath, '\\');
+    if (filename) filename++;
+    else filename = filepath;
+    
+    // Añadir documento
+    uint32_t doc_id = addDocument(index, collection, filepath, content, filename);
+    free(content);
+    
+    return (doc_id != 0) ? 1 : 0;
 }
