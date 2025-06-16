@@ -47,12 +47,6 @@ Descarga y prepara automáticamente varios conjuntos de prueba en `docs/corpus/`
 
 ---
 
-## generacsv.sh
-
-Genera datos sintéticos de prueba en formato CSV (por ejemplo, para pruebas de indexación o benchmarking de carga).
-
----
-
 ## benchmark.sh
 
 Ejecuta cada algoritmo (`kmp`, `bm`, `shiftand`) sobre distintos tamaños de texto y patrones, mide:
@@ -87,10 +81,6 @@ cd tools
 **Prepara los corpus de prueba**
 ```
 ./fetch_corpus.sh
-```
-**(opcional) Genera CSVs sintéticos**
-```
-./generacsv.sh
 ```
 **Ejecuta el benchmark**
 ```
