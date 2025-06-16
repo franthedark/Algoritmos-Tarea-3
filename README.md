@@ -126,7 +126,7 @@ Construye y consulta índices invertidos para búsquedas ultra-rápidas:
   ```bash
   make clean-all
   ```
-## 📦 Utilidades y Scripts (`tools/`)
+## Utilidades y Scripts (`tools/`)
 
 En el directorio [`tools/`](tools/) hemos agrupado todas las herramientas auxiliares para:
 
