@@ -48,39 +48,91 @@ Encargado de carga, preprocesamiento e indexación
 
 ## Ejecución del proyecto
 
-**Compilar todo**  
- Compila los módulos y genera el ejecutable en `build/buscador`
-  
-```
+### Compilación
+
+Compila los módulos y genera el ejecutable en `build/buscador`
+
+```bash
 make
-```    
-**Mostrar ayuda básica**  
- Muestra un mensaje con instrucciones de uso
- 
 ```
+
+### Ayuda
+
+Muestra un resumen de todos los comandos disponibles
+
+```bash
 make run
-```    
-**Buscar con KMP**  
- Ejecuta el algoritmo Knuth–Morris–Pratt sobre el archivo indicado
- 
 ```
-make run-kmp PAT="patrón" FILE=archivo.txt
-```    
-**Buscar con Boyer–Moore**  
- Ejecuta el algoritmo Boyer–Moore sobre el archivo indicado
- 
-```
-make run-bm PAT="patrón" FILE=archivo.txt
-```    
-**Buscar con Shift-And**  
- Ejecuta el algoritmo Shift-And sobre el archivo indicado
- 
-```
-make run-sa PAT="patrón" FILE=archivo.txt
-```    
-**Limpiar artefactos**  
- Elimina los directorios build/ y obj/ con todos los objetos y el ejecutable
- 
-```
-make clean
-```
+
+### Búsqueda de patrones
+
+Ejecuta la búsqueda exacta con el algoritmo elegido (KMP, Boyer–Moore o Shift-And) sobre un fichero de texto o HTML (debe existir en el directorio `docs/` o en la ruta actual):
+
+* **KMP**
+
+  ```bash
+  make run-kmp PAT="patrón" FILE=archivo.txt
+  ```
+* **Boyer–Moore**
+
+  ```bash
+  make run-bm PAT="patrón" FILE=archivo.txt
+  ```
+* **Shift-And**
+
+  ```bash
+  make run-shiftand PAT="patrón" FILE=archivo.txt
+  ```
+
+### Gestión de índices
+
+Construye y consulta índices invertidos para búsquedas ultra-rápidas:
+
+* **Crear índice**
+
+  ```bash
+  make create-index DIR=docs [INDEX=mi_indice.idx]
+  ```
+* **Buscar en el índice**
+
+  ```bash
+  make search-index TERM="término" [INDEX=mi_indice.idx]
+  ```
+* **Mostrar información del índice**
+
+  ```bash
+  make index-info [INDEX=mi_indice.idx]
+  ```
+* **Exportar índice a texto**
+
+  ```bash
+  make export-index OUTPUT=salida.txt [INDEX=mi_indice.idx]
+  ```
+* **Hacer copia de seguridad**
+
+  ```bash
+  make backup-index [INDEX=mi_indice.idx] [BACKUP_DIR=backups/]
+  ```
+
+### Limpieza
+
+* **Borrar objetos compilados**
+
+  ```bash
+  make clean
+  ```
+* **Borrar todo (incluye índices y backups)**
+
+  ```bash
+  make clean-all
+  ```
+## 📦 Utilidades y Scripts (`tools/`)
+
+En el directorio [`tools/`](tools/) hemos agrupado todas las herramientas auxiliares para:
+
+- **Descargar y preparar** corpora de texto de prueba (`fetch_corpus.sh`).
+- **Ejecutar benchmarks** de rendimiento (`benchmark.sh`).
+- **Visualizar resultados** con gráficos (`graficar_benchmark.py`).
+
+> Para ver instrucciones detalladas, visita  
+> [tools/README.md](tools/README.md)
