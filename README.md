@@ -91,27 +91,27 @@ Construye y consulta índices invertidos para búsquedas ultra-rápidas:
 * **Crear índice**
 
   ```bash
-  make create-index DIR=docs [INDEX=mi_indice.idx]
+  make create-index DIR=docs INDEX=mi_indice.idx
   ```
 * **Buscar en el índice**
 
   ```bash
-  make search-index TERM="término" [INDEX=mi_indice.idx]
+  make search-index TERM="término" INDEX=mi_indice.idx
   ```
 * **Mostrar información del índice**
 
   ```bash
-  make index-info [INDEX=mi_indice.idx]
+  make index-info INDEX=mi_indice.idx
   ```
 * **Exportar índice a texto**
 
   ```bash
-  make export-index OUTPUT=salida.txt [INDEX=mi_indice.idx]
+  make export-index OUTPUT=salida.txt INDEX=mi_indice.idx
   ```
 * **Hacer copia de seguridad**
 
   ```bash
-  make backup-index [INDEX=mi_indice.idx] [BACKUP_DIR=backups/]
+  make backup-index INDEX=mi_indice.idx
   ```
 
 ### Limpieza
